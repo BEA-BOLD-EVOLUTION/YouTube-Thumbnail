@@ -190,9 +190,9 @@ export function ApiKeySettings() {
             <Select
               value={settings?.gemini.model ?? 'gemini-2.5-flash-image'}
               onValueChange={(value) => {
-                if (value === 'gemini-3-pro-image-preview' && !hasByok) return
+                if ((value === 'gemini-3-pro-image-preview' || value === 'gemini-3.1-flash-image-preview') && !hasByok) return
                 setGeminiModel.mutate({
-                  model: value as 'gemini-2.5-flash-image' | 'gemini-3-pro-image-preview',
+                  model: value as 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image-preview' | 'gemini-3-pro-image-preview',
                 })
               }}
             >
@@ -205,6 +205,19 @@ export function ApiKeySettings() {
                     <Zap className="h-4 w-4 text-yellow-500" />
                     <span className="font-medium">Flash</span>
                     <span className="text-muted-foreground">Fast & free</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="gemini-3.1-flash-image-preview">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-blue-500" />
+                    <span className="font-medium">Flash 3.1</span>
+                    <span className="text-muted-foreground">Thinking + 512p</span>
+                    {!hasByok && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[10px] font-medium">
+                        <Lock className="h-2.5 w-2.5" />
+                        BYOK
+                      </span>
+                    )}
                   </div>
                 </SelectItem>
                 <SelectItem value="gemini-3-pro-image-preview">

@@ -25,6 +25,11 @@ const GEMINI_MODELS = {
     description: 'Fast and efficient. Default choice.',
     tier: 'free',
   },
+  'gemini-3.1-flash-image-preview': {
+    name: 'Gemini 3.1 Flash',
+    description: 'Thinking, search grounding, 512p. Requires your own API key.',
+    tier: 'pro',
+  },
   'gemini-3-pro-image-preview': {
     name: 'Gemini 3 Pro',
     description: 'Thinking capabilities, 4K output. Requires your own API key.',
@@ -110,9 +115,9 @@ export const settingsRouter = router({
     }),
 
   setGeminiModel: protectedProcedure
-    .input(z.object({ model: z.enum(['gemini-2.5-flash-image', 'gemini-3-pro-image-preview']) }))
+    .input(z.object({ model: z.enum(['gemini-2.5-flash-image', 'gemini-3.1-flash-image-preview', 'gemini-3-pro-image-preview']) }))
     .mutation(async ({ ctx, input }) => {
-      if (input.model === 'gemini-3-pro-image-preview') {
+      if (input.model === 'gemini-3-pro-image-preview' || input.model === 'gemini-3.1-flash-image-preview') {
         const user = await ctx.prisma.user.findUnique({
           where: { id: ctx.user.id },
           select: { geminiApiKey: true, useOwnGemini: true },

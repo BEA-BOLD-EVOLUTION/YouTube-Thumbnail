@@ -94,6 +94,15 @@ export const GEMINI_IMAGE_MODELS = {
     supportsSearchGrounding: false,
     maxImages: 3, // Max images that can be combined
   },
+  'gemini-3.1-flash-image-preview': {
+    name: 'Gemini 3.1 Flash (Nano Banana 2)',
+    description: 'Thinking, Google Search grounding, 512p output.',
+    tier: 'pro' as const,
+    supportsThinking: true,
+    supports4K: false, // 512p max
+    supportsSearchGrounding: true,
+    maxImages: 14,
+  },
   'gemini-3-pro-image-preview': {
     name: 'Gemini 3 Pro (Nano Banana Pro)',
     description: 'Thinking capabilities, Google Search grounding, 2K/4K output.',
@@ -456,7 +465,7 @@ function getClient(
   model?: GeminiImageModel,
   allowPlatformKeyForPro: boolean = false
 ): { client: GoogleGenAI | null; usedOwnKey: boolean; platformKeyIndex: number | null } {
-  const isPro = model === 'gemini-3-pro-image-preview'
+  const isPro = model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview'
   
   // User has their own key - always use it
   if (userApiKey) {
@@ -488,7 +497,7 @@ export async function generateStartingImage(
 ): Promise<ImageGenerationResult> {
   const model = params.model || DEFAULT_MODEL
   const modelInfo = GEMINI_IMAGE_MODELS[model]
-  const isPro = model === 'gemini-3-pro-image-preview'
+  const isPro = model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview'
   
   const { client: genai, usedOwnKey, platformKeyIndex } = getClient(
     params.userApiKey,
@@ -880,7 +889,7 @@ export async function generateCinematicLensPrompts(params: {
   allowPlatformKeyForPro?: boolean
 }): Promise<{ success: boolean; usedOwnKey?: boolean; items?: CinematicLensPromptItem[]; rawText?: string; error?: string }> {
   const model = params.model || DEFAULT_MODEL
-  const isPro = model === 'gemini-3-pro-image-preview'
+  const isPro = model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview'
   const { client: genai, usedOwnKey } = getClient(
     params.userApiKey,
     model,
@@ -1048,7 +1057,7 @@ export function isImageGenerationAvailable(
   model?: GeminiImageModel,
   allowPlatformKeyForPro: boolean = false
 ): boolean {
-  const isPro = model === 'gemini-3-pro-image-preview'
+  const isPro = model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview'
 
   // Pro model: BYOK by default; platform key only when explicitly allowed
   if (isPro) {

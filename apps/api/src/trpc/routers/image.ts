@@ -35,8 +35,7 @@ async function getContext(ctx: { prisma: any; user: { id: string } }) {
 export const imageRouter = router({
   isAvailable: protectedProcedure.query(async ({ ctx }) => {
     const { userApiKey } = await getContext(ctx)
-    const flashAvailable = isImageGenerationAvailable(userApiKey, 'gemini-2.5-flash-image', false)
-    const proAvailable = isImageGenerationAvailable(userApiKey, 'gemini-3-pro-image-preview', false)
+    const flashAvailable = isImageGenerationAvailable(userApiKey, 'gemini-2.5-flash-image', false)    const flash31Available = isImageGenerationAvailable(userApiKey, 'gemini-3.1-flash-image-preview', false)    const proAvailable = isImageGenerationAvailable(userApiKey, 'gemini-3-pro-image-preview', false)
     return {
       available: flashAvailable || proAvailable,
       provider: 'gemini',
@@ -74,8 +73,8 @@ export const imageRouter = router({
       let model: GeminiImageModel =
         input.model || (user?.geminiModel as GeminiImageModel) || 'gemini-2.5-flash-image'
 
-      // Pro model requires BYOK
-      if (model === 'gemini-3-pro-image-preview' && !userApiKey) {
+      // Pro models require BYOK
+      if ((model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') && !userApiKey) {
         model = 'gemini-2.5-flash-image'
       }
 
@@ -89,7 +88,7 @@ export const imageRouter = router({
       if (referenceCount > maxImages) {
         const canUsePro = !!userApiKey
         if (!input.model && model === 'gemini-2.5-flash-image' && referenceCount <= 14 && canUsePro) {
-          model = 'gemini-3-pro-image-preview'
+          model = 'gemini-3.1-flash-image-preview'
         } else {
           throw new TRPCError({
             code: canUsePro ? 'BAD_REQUEST' : 'FORBIDDEN',
@@ -200,7 +199,7 @@ export const imageRouter = router({
           .enum(['photorealistic', 'cinematic', 'anime', 'illustration', 'concept-art'])
           .optional()
           .default('photorealistic'),
-        model: z.enum(['gemini-2.5-flash-image', 'gemini-3-pro-image-preview']).optional(),
+        model: z.enum(['gemini-2.5-flash-image', 'gemini-3.1-flash-image-preview', 'gemini-3-pro-image-preview']).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -208,7 +207,7 @@ export const imageRouter = router({
 
       let model: GeminiImageModel =
         input.model || (user?.geminiModel as GeminiImageModel) || 'gemini-2.5-flash-image'
-      if (model === 'gemini-3-pro-image-preview' && !userApiKey) {
+      if ((model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') && !userApiKey) {
         model = 'gemini-2.5-flash-image'
       }
 
