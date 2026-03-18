@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  clerkId       String    @unique
+  email         String    @unique
+  name          String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // BYOK - Bring Your Own Gemini Key
+  geminiApiKey  String?
+  useOwnGemini  Boolean   @default(false)
+  geminiModel   String?   @default("gemini-2.5-flash-image")
+
+  aiUsageEvents AiUsageEvent[]
+
+  @@map("users")
+}
+
+model AiUsageEvent {
+  id             String    @id @default(cuid())
+  userId         String?
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  provider       String
+  model          String
+  operation      String
+  source         String?
+
+  usedOwnKey     Boolean   @default(false)
+
+  inputTokens    Int?
+  outputTokens   Int?
+  totalTokens    Int?
+  costUsd        Decimal?  @db.Decimal(10, 8)
+  currency       String    @default("USD")
+
+  metadata       Json?
+
+  createdAt      DateTime  @default(now())
+
+  @@map("ai_usage_events")
+  @@index([userId, createdAt])
+  @@index([provider, model])
+}

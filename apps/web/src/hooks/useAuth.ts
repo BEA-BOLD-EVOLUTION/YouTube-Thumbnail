@@ -1,0 +1,83 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { User, Session, AuthChangeEvent } from '@supabase/supabase-js'
+import { getSupabase } from '@/lib/supabase-client'
+import { useRouter } from 'next/navigation'
+
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const supabase = getSupabase()
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+    }
+    getSession()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event: AuthChangeEvent, session: Session | null) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+        if (event === 'SIGNED_IN') router.refresh()
+        if (event === 'SIGNED_OUT') router.push('/login')
+      }
+    )
+
+    return () => { subscription.unsubscribe() }
+  }, [router])
+
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    const supabase = getSupabase()
+    if (!supabase) return { data: null, error: new Error('Supabase not configured') }
+    return supabase.auth.signInWithPassword({ email, password })
+  }, [])
+
+  const signUpWithEmail = useCallback(async (email: string, password: string) => {
+    const supabase = getSupabase()
+    if (!supabase) return { data: null, error: new Error('Supabase not configured') }
+    return supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+  }, [])
+
+  const signInWithGoogle = useCallback(async () => {
+    const supabase = getSupabase()
+    if (!supabase) return { data: null, error: new Error('Supabase not configured') }
+    return supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+  }, [])
+
+  const signOut = useCallback(async () => {
+    const supabase = getSupabase()
+    if (!supabase) return { error: new Error('Supabase not configured') }
+    return supabase.auth.signOut()
+  }, [])
+
+  return {
+    user,
+    session,
+    loading,
+    signInWithEmail,
+    signUpWithEmail,
+    signInWithGoogle,
+    signOut,
+    isAuthenticated: !!session,
+  }
+}
