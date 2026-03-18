@@ -35,7 +35,9 @@ async function getContext(ctx: { prisma: any; user: { id: string } }) {
 export const imageRouter = router({
   isAvailable: protectedProcedure.query(async ({ ctx }) => {
     const { userApiKey } = await getContext(ctx)
-    const flashAvailable = isImageGenerationAvailable(userApiKey, 'gemini-2.5-flash-image', false)    const flash31Available = isImageGenerationAvailable(userApiKey, 'gemini-3.1-flash-image-preview', false)    const proAvailable = isImageGenerationAvailable(userApiKey, 'gemini-3-pro-image-preview', false)
+    const flashAvailable = isImageGenerationAvailable(userApiKey, 'gemini-2.5-flash-image', false)
+    const flash31Available = isImageGenerationAvailable(userApiKey, 'gemini-3.1-flash-image-preview', false)
+    const proAvailable = isImageGenerationAvailable(userApiKey, 'gemini-3-pro-image-preview', false)
     return {
       available: flashAvailable || proAvailable,
       provider: 'gemini',
