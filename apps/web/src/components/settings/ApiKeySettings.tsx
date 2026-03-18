@@ -190,9 +190,9 @@ export function ApiKeySettings() {
             <Select
               value={settings?.gemini.model ?? 'gemini-2.5-flash-image'}
               onValueChange={(value) => {
-                if (value === 'gemini-3-pro-image-preview' && !hasByok) return
+                if (value === 'gemini-3-pro-image' && !hasByok) return
                 setGeminiModel.mutate({
-                  model: value as 'gemini-2.5-flash-image' | 'gemini-3-pro-image-preview',
+                  model: value as 'gemini-2.5-flash-image' | 'gemini-3-pro-image',
                 })
               }}
             >
@@ -207,7 +207,7 @@ export function ApiKeySettings() {
                     <span className="text-muted-foreground">Fast & free</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="gemini-3-pro-image-preview">
+                <SelectItem value="gemini-3-pro-image">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-purple-500" />
                     <span className="font-medium">Pro</span>
