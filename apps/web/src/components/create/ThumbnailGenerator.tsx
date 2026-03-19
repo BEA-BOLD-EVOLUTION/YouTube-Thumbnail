@@ -174,6 +174,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       </div>
 
       <input
+        id="reference-file-upload"
         ref={fileInputRef}
         type="file"
         accept="image/*"
@@ -204,7 +205,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">1. Upload Reference Images</label>
+              <label htmlFor="reference-file-upload" className="text-sm font-medium">1. Upload Reference Images</label>
               {uploadedImages.length > 0 && (
                 <span className="text-xs text-muted-foreground">
                   {uploadedImages.length}/{MAX_REFERENCE_IMAGES}
@@ -256,8 +257,9 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">2. Describe what you want</label>
+            <label htmlFor="reference-prompt" className="text-sm font-medium">2. Describe what you want</label>
             <Textarea
+              id="reference-prompt"
               value={prompt}
               onChange={(e) => { setPrompt(e.target.value); setEnhancedPrompt('') }}
               placeholder="e.g., Transform into a dramatic YouTube thumbnail style..."
@@ -326,8 +328,9 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">2. YouTube Video URL</label>
+            <label htmlFor="youtube-url" className="text-sm font-medium">2. YouTube Video URL</label>
             <Input
+              id="youtube-url"
               type="url"
               value={youtubeUrl}
               onChange={(e) => setYoutubeUrl(e.target.value)}
@@ -344,10 +347,11 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       {/* Prompt / Intent Mode */}
       {(mode === 'prompt' || mode === 'intent') && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">
+          <label htmlFor="prompt-textarea" className="text-sm font-medium">
             {mode === 'intent' ? 'Describe your video idea' : 'Describe the thumbnail'}
           </label>
           <Textarea
+            id="prompt-textarea"
             value={prompt}
             onChange={(e) => { setPrompt(e.target.value); setEnhancedPrompt('') }}
             placeholder={

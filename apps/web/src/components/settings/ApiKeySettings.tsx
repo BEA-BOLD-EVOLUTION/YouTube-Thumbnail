@@ -185,7 +185,7 @@ export function ApiKeySettings() {
 
           {/* Model Selection */}
           <div className="space-y-3">
-            <Label className="text-base font-medium">Default Model</Label>
+            <Label htmlFor="gemini-model" className="text-base font-medium">Default Model</Label>
 
             <Select
               value={settings?.gemini.model ?? 'gemini-2.5-flash-image'}
@@ -196,7 +196,7 @@ export function ApiKeySettings() {
                 })
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger id="gemini-model">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
