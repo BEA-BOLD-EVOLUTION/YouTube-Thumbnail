@@ -45,6 +45,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
   const [mode, setMode] = useState<'prompt' | 'intent' | 'reference' | 'youtube'>('prompt')
   const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [youtubeTemplate, setYoutubeTemplate] = useState<'technical-guide' | 'do-this-not-that'>('technical-guide')
   const [uploadedImages, setUploadedImages] = useState<{ dataUrl: string; file: File }[]>([])
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
@@ -118,7 +119,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     if (mode !== 'youtube' && !prompt.trim()) return
 
     if (mode === 'youtube') {
-      youtubeGenerateMutation.mutate({ youtubeUrl, aspectRatio, style })
+      youtubeGenerateMutation.mutate({ youtubeUrl, aspectRatio, style, templateType: youtubeTemplate })
     } else if (mode === 'intent') {
       quickGenerateMutation.mutate({ videoIntent: prompt, aspectRatio, style })
     } else if (mode === 'reference' && uploadedImages.length > 0) {
@@ -283,18 +284,60 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
 
       {/* YouTube Mode */}
       {mode === 'youtube' && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium">YouTube Video URL</label>
-          <Input
-            type="url"
-            value={youtubeUrl}
-            onChange={(e) => setYoutubeUrl(e.target.value)}
-            placeholder="https://www.youtube.com/watch?v=..."
-            disabled={isLoading}
-          />
-          <p className="text-xs text-muted-foreground">
-            Paste a YouTube link and we'll create a thumbnail based on the video's title and description
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">1. Choose Template Style</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setYoutubeTemplate('technical-guide')}
+                disabled={isLoading}
+                className={cn(
+                  'p-3 rounded-lg border-2 text-left transition-all',
+                  youtubeTemplate === 'technical-guide'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-muted hover:border-primary/50'
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">✅</span>
+                  <span className="font-semibold text-sm">Technical Guide</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Single-panel success outcome style</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setYoutubeTemplate('do-this-not-that')}
+                disabled={isLoading}
+                className={cn(
+                  'p-3 rounded-lg border-2 text-left transition-all',
+                  youtubeTemplate === 'do-this-not-that'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-muted hover:border-primary/50'
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">⚖️</span>
+                  <span className="font-semibold text-sm">Do This; Not That</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Split-screen comparison style</p>
+              </button>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">2. YouTube Video URL</label>
+            <Input
+              type="url"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              We'll analyze the video and create a {youtubeTemplate === 'technical-guide' ? 'Technical Guide' : 'Do This; Not That'} style thumbnail
+            </p>
+          </div>
         </div>
       )}
 

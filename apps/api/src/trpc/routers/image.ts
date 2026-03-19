@@ -282,6 +282,7 @@ export const imageRouter = router({
     .input(
       z.object({
         youtubeUrl: z.string().url(),
+        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context']).optional().default('technical-guide'),
         aspectRatio: z
           .enum(['16:9', '9:16', '1:1', '4:3', '3:4'])
           .optional()
@@ -318,8 +319,8 @@ export const imageRouter = router({
         })
       }
 
-      // Create prompt from metadata
-      const videoIntent = createThumbnailPromptFromMetadata(metadata)
+      // Create prompt from metadata using selected template
+      const videoIntent = createThumbnailPromptFromMetadata(metadata, input.templateType)
 
       // Generate suggested prompt using AI
       const promptResult = await suggestImagePrompt(videoIntent, userApiKey)
@@ -356,7 +357,7 @@ export const imageRouter = router({
         operation: 'image.generate',
         source: 'trpc.image.generateFromYouTube',
         usedOwnKey: !!imageResult.usedOwnKey,
-        metadata: { aspectRatio: input.aspectRatio, style: input.style, youtubeVideoId: metadata.videoId },
+        metadata: { aspectRatio: input.aspectRatio, style: input.style, youtubeVideoId: metadata.videoId, templateType: input.templateType },
       })
 
       if (!imageResult.success) {
