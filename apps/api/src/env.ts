@@ -23,7 +23,7 @@ function aliasEnv(target: string, sources: string[]) {
 
 // Normalize environment variable aliases
 aliasEnv('GOOGLE_GEMINI_API_KEY', ['Google_Gemini_API_Key', 'Google_Gemini'])
-aliasEnv('DATABASE_URL', ['Supabase_Database_Direct_Conecnt'])
+aliasEnv('DATABASE_URL', ['Supabase_Database_Direct_Connect'])
 aliasEnv('SUPABASE_URL', ['Supabase_Project_URL'])
 aliasEnv('SUPABASE_SERVICE_KEY', ['Supabase_Service_Role', 'Supabase_Secret_Key'])
 

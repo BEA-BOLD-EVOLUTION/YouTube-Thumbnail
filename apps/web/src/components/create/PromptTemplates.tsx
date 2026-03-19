@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
-export type TemplateId = 'technical-guide' | 'do-this-not-that'
+export type TemplateId = 'subject-context' | 'technical-guide' | 'do-this-not-that'
 
 interface TemplateField {
   key: string
@@ -26,6 +26,21 @@ interface Template {
 }
 
 export const PROMPT_TEMPLATES: Template[] = [
+  {
+    id: 'subject-context',
+    name: 'Subject + Context',
+    icon: '📌',
+    description: 'Professional informational thumbnail with subject line and supporting context',
+    fields: [
+      { key: 'subject', label: 'Subject', placeholder: 'e.g., TikTok LIVE Compliance', type: 'text' },
+      { key: 'context', label: 'Context', placeholder: 'e.g., Low-Quality and Interactive Streaming Standards', type: 'textarea' },
+      { key: 'visualStyle', label: 'Visual Style (optional)', placeholder: 'e.g., modern gradient background, tech-themed icons, professional layout', type: 'textarea' },
+    ],
+    generate: (values) => {
+      const visualStyle = values.visualStyle || 'modern gradient background with vibrant colors, professional icons and visual elements'
+      return `A professional, high-impact YouTube thumbnail in a clean digital illustration style with ${visualStyle}. The main subject '${values.subject}' is displayed in large, bold, eye-catching 3D text at the top or center of the composition. Below or around it, supporting context about '${values.context}' is represented through relevant icons, symbols, or visual metaphors that clearly communicate the topic. The design uses high contrast, vibrant colors optimized for mobile viewing, with a balanced composition that draws the eye to the subject first, then the supporting context. All text is highly legible and professionally styled.`
+    },
+  },
   {
     id: 'technical-guide',
     name: 'Technical Guide',
