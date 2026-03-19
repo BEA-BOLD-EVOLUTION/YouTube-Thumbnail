@@ -36,7 +36,7 @@ export const PROMPT_TEMPLATES: Template[] = [
       { key: 'successIndicators', label: 'Success Indicators', placeholder: 'e.g., Glowing, smooth sound wave patterns and a thumbs-up icon', type: 'textarea' },
       { key: 'mainHeadline', label: 'Main Headline', placeholder: 'e.g., HOW TO GET PERFECT AUDIO', type: 'text' },
     ],
-    generate: (values) => `A high-contrast YouTube thumbnail in a clean 2D digital illustration style. The composition is a single, centered panel focusing exclusively on the successful final outcome (the 'AFTER' state). Central to the image is ${values.solutionObject}. Floating around the main object are ${values.successIndicators}. At the top, massive, bold yellow 3D 'YouTube-style' text reads '${values.mainHeadline}'. The background uses the deep teal-to-purple gradient with signature string lights and the small flying book icon in the top right. Highly vibrant, clean bold lines, and optimized for mobile screens. No 'Before' steps, no arrows, just the final result.`,
+    generate: (values) => `A high-contrast YouTube thumbnail in a clean 2D digital illustration style. The composition is a single, centered panel focusing exclusively on the successful final outcome (the 'AFTER' state). Central to the image is ${values.solutionObject}. Floating around the main object are ${values.successIndicators}. At the top, massive, bold yellow 3D 'YouTube-style' text reads '${values.mainHeadline}'. Highly vibrant, clean bold lines, optimized for mobile screens. No 'Before' steps, no arrows, just the final result.`,
   },
   {
     id: 'do-this-not-that',
@@ -49,7 +49,7 @@ export const PROMPT_TEMPLATES: Template[] = [
       { key: 'dullColor', label: 'Dull Color (Left)', placeholder: 'e.g., Muted Blue', type: 'text' },
       { key: 'vibrantColor', label: 'Vibrant Color (Right)', placeholder: 'e.g., Emerald Green', type: 'text' },
     ],
-    generate: (values) => `A high-contrast YouTube thumbnail in a vibrant 2D digital illustration style with a vertical split-screen design. Centered over the split is large, bold 3D text that reads 'DO THIS; NOT THAT' in yellow and white. On the left side (the 'Not That' side), use a ${values.dullColor} background with a large red circle-with-X icon over a ${values.badThing}. On the right side (the 'Do This' side), use a ${values.vibrantColor} background with a large green circle-with-checkmark icon next to a ${values.goodThing}. Clean lines, professional graphic design, and all text must be large and highly visible. Use the small flying book icon in the far top right corner. The lighting in the background should feature simplified string lights.`,
+    generate: (values) => `A high-contrast YouTube thumbnail in a vibrant 2D digital illustration style with a vertical split-screen design. Centered over the split is large, bold 3D text that reads 'DO THIS; NOT THAT' in yellow and white. On the left side (the 'Not That' side), use a ${values.dullColor} background with a large red circle-with-X icon over ${values.badThing}. On the right side (the 'Do This' side), use a ${values.vibrantColor} background with a large green circle-with-checkmark icon next to ${values.goodThing}. Clean lines, professional graphic design, all text must be large and highly visible.`,
   },
 ]
 
