@@ -393,8 +393,8 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       )}
 
       {/* Aspect Ratio */}
-      <div className="space-y-2">
-        <label className="text-xs text-muted-foreground">Aspect Ratio</label>
+      <div className="space-y-2" role="group" aria-label="Aspect Ratio">
+        <span className="text-xs text-muted-foreground">Aspect Ratio</span>
         <div className="flex gap-2">
           {ASPECT_RATIOS.map((ar) => (
             <button
@@ -415,8 +415,8 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       </div>
 
       {/* Style */}
-      <div className="space-y-2">
-        <label className="text-xs text-muted-foreground">Style</label>
+      <div className="space-y-2" role="group" aria-label="Style">
+        <span className="text-xs text-muted-foreground">Style</span>
         <div className="grid grid-cols-3 gap-2">
           {STYLES.map((s) => (
             <button

@@ -65,24 +65,32 @@ export default function Home() {
             <h2 className="text-lg font-semibold text-center">Sign In</h2>
 
             <form onSubmit={handleAuth} className="space-y-3">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={authLoading}
-                className="w-full px-3 py-2 rounded-md border border-input bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={authLoading}
-                className="w-full px-3 py-2 rounded-md border border-input bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-                required
-              />
+              <div>
+                <label htmlFor="login-email" className="sr-only">Email</label>
+                <input
+                  id="login-email"
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={authLoading}
+                  className="w-full px-3 py-2 rounded-md border border-input bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="login-password" className="sr-only">Password</label>
+                <input
+                  id="login-password"
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={authLoading}
+                  className="w-full px-3 py-2 rounded-md border border-input bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                />
+              </div>
               {authError && (
                 <div className="p-3 rounded-md bg-red-500/10 border border-red-500/20 text-red-500 text-sm flex items-start gap-2">
                   <span className="text-base">⚠️</span>
