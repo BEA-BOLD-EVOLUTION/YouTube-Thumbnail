@@ -5,6 +5,7 @@ import { trpc } from '@/lib/trpc'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { PromptTemplateDialog, TemplateButton } from './PromptTemplates'
 
 type AspectRatio = '16:9' | '9:16' | '1:1'
 type Style = 'photorealistic' | 'cinematic' | 'anime' | 'illustration' | 'concept-art'
@@ -44,6 +45,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   const [mode, setMode] = useState<'prompt' | 'intent' | 'reference'>('prompt')
   const [uploadedImages, setUploadedImages] = useState<{ dataUrl: string; file: File }[]>([])
   const [isEnhancing, setIsEnhancing] = useState(false)
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
   const MAX_REFERENCE_IMAGES = 4
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -92,6 +94,11 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
           }))
         : undefined
     suggestPromptMutation.mutate({ videoIntent: prompt, referenceImages })
+  }
+
+  const handleApplyTemplate = (generatedPrompt: string) => {
+    setPrompt(generatedPrompt)
+    setEnhancedPrompt('')
   }
 
   const handleGenerate = () => {
@@ -276,15 +283,23 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
             className="min-h-24 resize-none"
             disabled={isLoading}
           />
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground flex-1">
               {mode === 'intent'
                 ? "We'll create a thumbnail concept for your video"
                 : 'Describe exactly what you want in the thumbnail'}
             </p>
-            <Button variant="outline" size="sm" onClick={handleEnhancePrompt} disabled={!prompt.trim() || isEnhancing || isLoading}>
-              {isEnhancing ? '✨ Enhancing...' : '✨ Enhance'}
-            </Button>
+            <div className="flex gap-2">
+              {mode === 'prompt' && (
+                <TemplateButton
+                  onClick={() => setTemplateDialogOpen(true)}
+                  disabled={isLoading}
+                />
+              )}
+              <Button variant="outline" size="sm" onClick={handleEnhancePrompt} disabled={!prompt.trim() || isEnhancing || isLoading}>
+                {isEnhancing ? '✨ Enhancing...' : '✨ Enhance'}
+              </Button>
+            </div>
           </div>
 
           {enhancedPrompt && (
@@ -399,6 +414,12 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
           💡 Describe your YouTube thumbnail or upload reference images to get started
         </div>
       )}
+
+      <PromptTemplateDialog
+        open={templateDialogOpen}
+        onOpenChange={setTemplateDialogOpen}
+        onApplyTemplate={handleApplyTemplate}
+      />
     </div>
   )
 }
