@@ -21,9 +21,20 @@ export default function Home() {
       const result = await signInWithEmail(email, password)
       
       if (result?.error) {
-        setAuthError(result.error.message)
+        console.error('Login error:', result.error)
+        let errorMessage = result.error.message
+        
+        // Provide helpful error messages
+        if (errorMessage.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials.'
+        } else if (errorMessage.includes('Email not confirmed')) {
+          errorMessage = 'Please confirm your email address. Check your inbox or contact admin to confirm your account.'
+        }
+        
+        setAuthError(errorMessage)
       }
     } catch (error: any) {
+      console.error('Auth error:', error)
       setAuthError(error.message || 'An unexpected error occurred')
     } finally {
       setAuthLoading(false)
