@@ -19,7 +19,8 @@ if (missingVars.length > 0) {
 
 console.log('🔧 Environment check:')
 console.log('   DATABASE_URL:', process.env.DATABASE_URL ? '✅ set' : '❌ missing')
-console.log('   SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ set' : '❌ missing')
+console.log('   SUPABASE_URL:', process.env.SUPABASE_URL ? `✅ ${process.env.SUPABASE_URL}` : '❌ missing')
+console.log('   SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? `✅ set (${process.env.SUPABASE_SERVICE_KEY.slice(0, 10)}...)` : '❌ missing')
 console.log('   GOOGLE_GEMINI_API_KEY:', process.env.GOOGLE_GEMINI_API_KEY ? '✅ set' : '❌ missing (image generation)')
 
 const allowedOrigins = [
@@ -50,6 +51,29 @@ app.use(express.urlencoded({ limit: '100mb', extended: true }))
 
 app.get('/', (_, res) => res.json({ status: 'ok', service: 'YouTube Thumbnail API' }))
 app.get('/health', (_, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
+app.get('/debug/auth-check', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  const supabaseUrl = process.env.SUPABASE_URL || 'NOT SET'
+  const serviceKeySet = !!process.env.SUPABASE_SERVICE_KEY
+  const { supabase } = require('./lib/supabase')
+  const result: Record<string, unknown> = {
+    supabaseUrl,
+    serviceKeySet,
+    supabaseClientInitialized: !!supabase,
+    tokenProvided: !!token,
+    tokenLength: token?.length ?? 0,
+  }
+  if (token && supabase) {
+    try {
+      const { data, error } = await supabase.auth.getUser(token)
+      result.getUserError = error ? { message: error.message, status: error.status } : null
+      result.getUserData = data?.user ? { id: data.user.id, email: data.user.email } : null
+    } catch (err: any) {
+      result.getUserException = err.message
+    }
+  }
+  res.json(result)
+})
 
 app.use(
   '/trpc',
