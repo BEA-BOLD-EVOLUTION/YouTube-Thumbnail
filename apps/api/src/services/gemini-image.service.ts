@@ -143,6 +143,12 @@ export interface GenerateImageParams {
    * This must only be enabled by trusted server-side code after verifying entitlement.
    */
   allowPlatformKeyForPro?: boolean
+  /**
+   * When true, skip prepending STYLE_PROMPTS to the prompt.
+   * Use this when the prompt already contains its own style instructions
+   * (e.g. YouTube template prompts that specify "2D digital illustration").
+   */
+  skipStylePrefix?: boolean
 }
 
 export interface GeneratedImage {
@@ -311,7 +317,8 @@ function enhancePromptForImageGeneration(
   prompt: string, 
   style?: string,
   aspectRatio?: string,
-  hasReference?: boolean
+  hasReference?: boolean,
+  skipStylePrefix?: boolean
 ): string {
   // Step 1: Intelligent enhancement (transform poor prompts per official guidance)
   const { enhanced: smartPrompt } = intelligentPromptEnhancement(prompt)
@@ -319,7 +326,8 @@ function enhancePromptForImageGeneration(
   let enhanced = ''
   
   // Step 2: Add style-specific guidance (narrative descriptions)
-  if (style && STYLE_PROMPTS[style]) {
+  // Skip when the prompt already embeds its own style (e.g. YouTube templates)
+  if (!skipStylePrefix && style && STYLE_PROMPTS[style]) {
     enhanced = STYLE_PROMPTS[style] + '\n\n'
   }
   
@@ -534,7 +542,7 @@ export async function generateStartingImage(
             hadPhotographyTerms: analysis.hasPhotographyTerms,
             wasEnhanced: analysis.enhanced !== params.prompt
           }
-          return enhancePromptForImageGeneration(params.prompt, params.style, params.aspectRatio, false)
+          return enhancePromptForImageGeneration(params.prompt, params.style, params.aspectRatio, false, params.skipStylePrefix)
         })()
 
     const contentParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []

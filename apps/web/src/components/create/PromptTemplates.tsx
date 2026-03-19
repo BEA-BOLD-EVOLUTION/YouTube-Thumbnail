@@ -37,8 +37,8 @@ export const PROMPT_TEMPLATES: Template[] = [
       { key: 'visualStyle', label: 'Visual Style (optional)', placeholder: 'e.g., modern gradient background, tech-themed icons, professional layout', type: 'textarea' },
     ],
     generate: (values) => {
-      const visualStyle = values.visualStyle || 'modern gradient background with vibrant colors, professional icons and visual elements'
-      return `A professional, high-impact YouTube thumbnail in a clean digital illustration style with ${visualStyle}. The main subject '${values.subject}' is displayed in large, bold, eye-catching 3D text at the top or center of the composition. Below or around it, supporting context about '${values.context}' is represented through relevant icons, symbols, or visual metaphors that clearly communicate the topic. The design uses high contrast, vibrant colors optimized for mobile viewing, with a balanced composition that draws the eye to the subject first, then the supporting context. All text is highly legible and professionally styled.`
+      const visualStyle = values.visualStyle || 'modern gradient background with vibrant saturated colors, cartoon-style icons and visual elements with thick outlines'
+      return `A bold, high-contrast YouTube thumbnail in a 2D cartoon illustration style with thick clean outlines and ${visualStyle}. The main subject '${values.subject}' is displayed in large, bold 3D block text with black outlines and drop shadows at the top or center of the composition. Below or around it, supporting context about '${values.context}' is represented through cartoon-style icons, symbols, or visual metaphors with thick outlines and flat color fills that clearly communicate the topic. The design uses high contrast, vibrant saturated colors optimized for mobile viewing, with a balanced composition that draws the eye to the subject first, then the supporting context. All text is large, bold, and highly legible with 3D block letter styling. NO photorealism, NO photography — pure bold cartoon illustration.`
     },
   },
   {
@@ -51,7 +51,7 @@ export const PROMPT_TEMPLATES: Template[] = [
       { key: 'successIndicators', label: 'Success Indicators', placeholder: 'e.g., Glowing, smooth sound wave patterns and a thumbs-up icon', type: 'textarea' },
       { key: 'mainHeadline', label: 'Main Headline', placeholder: 'e.g., HOW TO GET PERFECT AUDIO', type: 'text' },
     ],
-    generate: (values) => `A high-contrast YouTube thumbnail in a clean 2D digital illustration style. The composition is a single, centered panel focusing exclusively on the successful final outcome (the 'AFTER' state). Central to the image is ${values.solutionObject}. Floating around the main object are ${values.successIndicators}. At the top, massive, bold yellow 3D 'YouTube-style' text reads '${values.mainHeadline}'. Highly vibrant, clean bold lines, optimized for mobile screens. No 'Before' steps, no arrows, just the final result.`,
+    generate: (values) => `A bold, high-contrast YouTube thumbnail in a 2D cartoon illustration style with thick clean outlines. The composition is a single, centered panel focusing exclusively on the successful final outcome (the 'AFTER' state). Central to the image is ${values.solutionObject}, drawn in a bold cartoon style with thick outlines and flat vibrant colors. Floating around the main object are ${values.successIndicators}, all as cartoon-style icons with clean outlines. At the top, massive, bold 3D block text with black outlines reads '${values.mainHeadline}' in yellow. Highly vibrant saturated colors, clean bold outlines, flat color fills, optimized for mobile screens. No 'Before' steps, no arrows, just the final result. NO photorealism, NO photography — pure bold cartoon illustration.`,
   },
   {
     id: 'do-this-not-that',
@@ -64,7 +64,7 @@ export const PROMPT_TEMPLATES: Template[] = [
       { key: 'dullColor', label: 'Dull Color (Left)', placeholder: 'e.g., Muted Blue', type: 'text' },
       { key: 'vibrantColor', label: 'Vibrant Color (Right)', placeholder: 'e.g., Emerald Green', type: 'text' },
     ],
-    generate: (values) => `A high-contrast YouTube thumbnail in a vibrant 2D digital illustration style with a vertical split-screen design. Centered over the split is large, bold 3D text that reads 'DO THIS; NOT THAT' in yellow and white. On the left side (the 'Not That' side), use a ${values.dullColor} background with a large red circle-with-X icon over ${values.badThing}. On the right side (the 'Do This' side), use a ${values.vibrantColor} background with a large green circle-with-checkmark icon next to ${values.goodThing}. Clean lines, professional graphic design, all text must be large and highly visible.`,
+    generate: (values) => `A bold, high-contrast YouTube thumbnail in a 2D cartoon illustration style with thick clean outlines and a vertical split-screen design. Centered over the split is large, bold 3D block text with black outlines that reads 'DO THIS; NOT THAT' in yellow and white. On the left side (the 'Not That' side), use a ${values.dullColor} background with a large red circle-with-X icon over ${values.badThing}, drawn in cartoon style with thick outlines. On the right side (the 'Do This' side), use a ${values.vibrantColor} background with a large green circle-with-checkmark icon next to ${values.goodThing}, drawn in cartoon style with thick outlines. Clean bold outlines on everything, flat color fills, all text must be large and highly visible with 3D block letter styling. NO photorealism, NO photography — pure bold cartoon illustration.`,
   },
 ]
 

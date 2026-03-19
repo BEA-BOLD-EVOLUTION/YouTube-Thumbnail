@@ -120,11 +120,12 @@ function createTechnicalGuidePrompt(title: string, description: string): string 
   return `Create a YouTube thumbnail in the "Technical Guide" style:
 
 STYLE REQUIREMENTS:
-- High-contrast 2D digital illustration style
+- Bold, high-contrast 2D cartoon illustration with thick clean outlines
 - Single-panel composition showing the successful final outcome (AFTER state)
-- Clean, vibrant colors optimized for mobile screens
-- Bold yellow 3D "YouTube-style" text for the headline
-- Success indicators and positive visual elements
+- Vibrant, saturated flat colors optimized for mobile screens
+- Large bold 3D "YouTube-style" text with black outlines and drop shadows for the headline
+- Cartoon-style icons, symbols, and success indicators
+- NO photorealism, NO photography, NO camera effects — pure illustration
 
 VIDEO CONTEXT:
 Title: "${title}"
@@ -132,13 +133,13 @@ ${description ? `Description: "${description.slice(0, 300)}..."` : ''}
 
 INSTRUCTIONS:
 Analyze the video title and create a thumbnail featuring:
-1. A central object or visual that represents the successful solution
+1. A central cartoon-style object or visual that represents the successful solution
 2. Glowing success indicators, checkmarks, or positive visual elements around it
-3. Large, bold headline text extracted from the video title at the top
-4. High contrast, clean bold lines
+3. Large, bold headline text extracted from the video title in 3D block letters
+4. High contrast, clean bold outlines, flat color fills
 5. Focus only on the final positive result - no "before" states or comparisons
 
-The thumbnail should clearly communicate achievement and success.`
+The thumbnail should clearly communicate achievement and success in a bold cartoon illustration style.`
 }
 
 /**
@@ -148,12 +149,13 @@ function createDoThisNotThatPrompt(title: string, description: string): string {
   return `Create a YouTube thumbnail in the "Do This; Not That" comparison style:
 
 STYLE REQUIREMENTS:
-- High-contrast 2D digital illustration with vertical split-screen design
-- Large, bold 3D text "DO THIS; NOT THAT" centered over the split in yellow and white
-- Left side: muted/dull color background with red circle-X icon (WRONG way)
-- Right side: vibrant color background with green circle-checkmark icon (RIGHT way)
-- Clean lines, professional graphic design
-- All text must be large and highly visible
+- Bold, high-contrast 2D cartoon illustration with thick clean outlines
+- Vertical split-screen design with strong color contrast between sides
+- Large, bold 3D text "DO THIS; NOT THAT" centered over the split in yellow and white with black outlines
+- Left side: muted/dull color background with large red circle-X icon (WRONG way)
+- Right side: vibrant color background with large green circle-checkmark icon (RIGHT way)
+- Cartoon-style icons and objects with thick outlines and flat color fills
+- NO photorealism, NO photography, NO camera effects — pure illustration
 
 VIDEO CONTEXT:
 Title: "${title}"
@@ -161,13 +163,13 @@ ${description ? `Description: "${description.slice(0, 300)}..."` : ''}
 
 INSTRUCTIONS:
 Analyze the video title and create a comparison thumbnail:
-1. LEFT SIDE (Wrong Way): Show the problem, mistake, or inefficient method with a muted blue/gray background and large red X
-2. RIGHT SIDE (Right Way): Show the solution, correct method, or optimal approach with a vibrant green/emerald background and large green checkmark
-3. Center the text "DO THIS; NOT THAT" in bold 3D letters overlapping both sides
+1. LEFT SIDE (Wrong Way): Show the problem or mistake with cartoon icons, muted blue/gray background and large red X
+2. RIGHT SIDE (Right Way): Show the solution or correct method with cartoon icons, vibrant green/emerald background and large green checkmark
+3. Center the text "DO THIS; NOT THAT" in bold 3D block letters with black outlines overlapping both sides
 4. Make the contrast between wrong and right visually striking
-5. Use relevant visual metaphors or icons that represent the video's topic
+5. Use cartoon-style visual metaphors or icons that represent the video's topic
 
-The thumbnail should immediately communicate a clear before/after or wrong/right comparison.`
+The thumbnail should immediately communicate a clear wrong/right comparison in a bold cartoon illustration style.`
 }
 
 /**
@@ -177,12 +179,12 @@ function createSubjectContextPrompt(title: string, description: string): string 
   return `Create a YouTube thumbnail in the "Subject + Context" informational style:
 
 STYLE REQUIREMENTS:
-- Professional, high-impact digital illustration
-- Modern gradient background with vibrant colors
-- Main subject in large, bold, eye-catching 3D text
-- Supporting context through relevant icons and visual elements
-- High contrast, balanced composition
-- Optimized for mobile viewing
+- Bold, high-contrast 2D cartoon illustration with thick clean outlines
+- Modern gradient background with vibrant, saturated colors
+- Main subject in large, bold 3D block text with black outlines and drop shadows
+- Cartoon-style supporting icons and visual elements with thick outlines
+- Flat color fills, no gradients on objects — clean graphic design
+- NO photorealism, NO photography, NO camera effects — pure illustration
 
 VIDEO CONTEXT:
 Title: "${title}"
@@ -190,11 +192,11 @@ ${description ? `Description: "${description.slice(0, 300)}..."` : ''}
 
 INSTRUCTIONS:
 Create a professional informational thumbnail:
-1. Display the main subject from the title in large, bold 3D text at the top/center
-2. Add supporting visual elements (icons, symbols, or metaphors) that represent the context
+1. Display the main subject from the title in large, bold 3D block text at the top/center
+2. Add cartoon-style supporting visual elements (icons, symbols, or metaphors) that represent the context
 3. Use modern gradient background with professional styling
-4. Ensure high contrast and legibility
+4. Ensure high contrast and legibility with thick outlines on all elements
 5. Create a balanced composition that draws attention to the subject first
 
-The thumbnail should clearly communicate the topic in a professional, informative way.`
+The thumbnail should clearly communicate the topic in a bold cartoon illustration style.`
 }

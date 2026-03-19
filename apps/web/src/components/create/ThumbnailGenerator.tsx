@@ -189,7 +189,10 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
           <button
             key={m}
             type="button"
-            onClick={() => setMode(m)}
+            onClick={() => {
+              setMode(m)
+              if (m === 'youtube') setStyle('illustration')
+            }}
             className={cn(
               'px-3 py-2 rounded-lg text-sm font-medium transition-all',
               mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'

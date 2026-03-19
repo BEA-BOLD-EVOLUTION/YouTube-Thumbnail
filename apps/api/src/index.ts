@@ -5,6 +5,7 @@ import cors from 'cors'
 import { createExpressMiddleware } from '@trpc/server/adapters/express'
 import { appRouter } from './trpc/router'
 import { createContext } from './trpc/context'
+import { supabase } from './lib/supabase'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 4000
@@ -55,7 +56,6 @@ app.get('/debug/auth-check', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '')
   const supabaseUrl = process.env.SUPABASE_URL || 'NOT SET'
   const serviceKeySet = !!process.env.SUPABASE_SERVICE_KEY
-  const { supabase } = require('./lib/supabase')
   const result: Record<string, unknown> = {
     supabaseUrl,
     serviceKeySet,

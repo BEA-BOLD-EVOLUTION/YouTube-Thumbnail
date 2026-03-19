@@ -350,7 +350,8 @@ export const imageRouter = router({
         })
       }
 
-      // Generate the thumbnail
+      // Generate the thumbnail — skip style prefix because YouTube templates
+      // already embed their own style instructions ("2D digital illustration", etc.)
       const imageResult = await generateStartingImage({
         prompt: promptResult.prompt,
         aspectRatio: input.aspectRatio as GenerateImageParams['aspectRatio'],
@@ -358,6 +359,7 @@ export const imageRouter = router({
         userApiKey,
         model,
         allowPlatformKeyForPro: false,
+        skipStylePrefix: true,
       })
 
       await recordAiUsageEvent(ctx.prisma, {
