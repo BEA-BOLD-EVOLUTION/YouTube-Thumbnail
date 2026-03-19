@@ -10,6 +10,7 @@ import {
   type GeminiImageModel,
 } from '../../services/gemini-image.service'
 import { recordAiUsageEvent } from '../../services/ai-usage.service'
+import { getYouTubeMetadata, createThumbnailPromptFromMetadata } from '../../services/youtube.service'
 
 function decryptApiKey(encrypted: string | null): string | null {
   if (!encrypted) return null
@@ -266,6 +267,112 @@ export const imageRouter = router({
       return {
         success: true,
         usedOwnKey: imageResult.usedOwnKey,
+        suggestedPrompt: promptResult.prompt,
+        image: {
+          base64: imageResult.image!.base64,
+          mimeType: imageResult.image!.mimeType,
+          prompt: imageResult.image!.prompt,
+          enhancedPrompt: imageResult.image!.enhancedPrompt,
+          model: imageResult.image!.model,
+        },
+      }
+    }),
+
+  generateFromYouTube: protectedProcedure
+    .input(
+      z.object({
+        youtubeUrl: z.string().url(),
+        aspectRatio: z
+          .enum(['16:9', '9:16', '1:1', '4:3', '3:4'])
+          .optional()
+          .default('16:9'),
+        style: z
+          .enum(['photorealistic', 'cinematic', 'anime', 'illustration', 'concept-art'])
+          .optional()
+          .default('photorealistic'),
+        model: z.enum(['gemini-2.5-flash-image', 'gemini-3.1-flash-image-preview', 'gemini-3-pro-image-preview']).optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { user, userApiKey } = await getContext(ctx)
+
+      let model: GeminiImageModel =
+        input.model || (user?.geminiModel as GeminiImageModel) || 'gemini-2.5-flash-image'
+      if ((model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') && !userApiKey) {
+        model = 'gemini-2.5-flash-image'
+      }
+
+      if (!isImageGenerationAvailable(userApiKey, model, false)) {
+        throw new TRPCError({
+          code: 'PRECONDITION_FAILED',
+          message: 'Image generation is not available.',
+        })
+      }
+
+      // Fetch YouTube metadata
+      const metadata = await getYouTubeMetadata(input.youtubeUrl)
+      if (!metadata) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Failed to fetch YouTube video metadata. Please check the URL.',
+        })
+      }
+
+      // Create prompt from metadata
+      const videoIntent = createThumbnailPromptFromMetadata(metadata)
+
+      // Generate suggested prompt using AI
+      const promptResult = await suggestImagePrompt(videoIntent, userApiKey)
+      await recordAiUsageEvent(ctx.prisma, {
+        userId: ctx.user.id,
+        provider: 'gemini',
+        model: 'gemini-2.5-flash-image',
+        operation: 'image.suggestPrompt',
+        source: 'trpc.image.generateFromYouTube',
+        usedOwnKey: !!userApiKey,
+      })
+
+      if (!promptResult.success || !promptResult.prompt) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create prompt from YouTube video',
+        })
+      }
+
+      // Generate the thumbnail
+      const imageResult = await generateStartingImage({
+        prompt: promptResult.prompt,
+        aspectRatio: input.aspectRatio as GenerateImageParams['aspectRatio'],
+        style: input.style as GenerateImageParams['style'],
+        userApiKey,
+        model,
+        allowPlatformKeyForPro: false,
+      })
+
+      await recordAiUsageEvent(ctx.prisma, {
+        userId: ctx.user.id,
+        provider: 'gemini',
+        model: imageResult.image?.model ?? model,
+        operation: 'image.generate',
+        source: 'trpc.image.generateFromYouTube',
+        usedOwnKey: !!imageResult.usedOwnKey,
+        metadata: { aspectRatio: input.aspectRatio, style: input.style, youtubeVideoId: metadata.videoId },
+      })
+
+      if (!imageResult.success) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: imageResult.error || 'Failed to generate thumbnail',
+        })
+      }
+
+      return {
+        success: true,
+        usedOwnKey: imageResult.usedOwnKey,
+        videoMetadata: {
+          title: metadata.title,
+          channelTitle: metadata.channelTitle,
+        },
         suggestedPrompt: promptResult.prompt,
         image: {
           base64: imageResult.image!.base64,

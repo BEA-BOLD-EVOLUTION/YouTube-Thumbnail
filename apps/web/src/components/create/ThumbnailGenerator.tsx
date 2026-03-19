@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { trpc } from '@/lib/trpc'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { PromptTemplateDialog, TemplateButton } from './PromptTemplates'
@@ -42,7 +43,8 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9')
   const [style, setStyle] = useState<Style>('photorealistic')
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
-  const [mode, setMode] = useState<'prompt' | 'intent' | 'reference'>('prompt')
+  const [mode, setMode] = useState<'prompt' | 'intent' | 'reference' | 'youtube'>('prompt')
+  const [youtubeUrl, setYoutubeUrl] = useState('')
   const [uploadedImages, setUploadedImages] = useState<{ dataUrl: string; file: File }[]>([])
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
@@ -70,6 +72,16 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     },
   })
 
+  const youtubeGenerateMutation = trpc.image.generateFromYouTube.useMutation({
+    onSuccess: (data: any) => {
+      if (data.success && data.image) {
+        setGeneratedImage(data.image)
+        const dataUrl = `data:${data.image.mimeType};base64,${data.image.base64}`
+        onImageGenerated?.(dataUrl, data.image.prompt)
+      }
+    },
+  })
+
   const suggestPromptMutation = trpc.image.suggestPrompt.useMutation({
     onSuccess: (data: any) => {
       if (data.success && data.suggestedPrompt) {
@@ -80,8 +92,8 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     onError: () => setIsEnhancing(false),
   })
 
-  const isLoading = generateMutation.isPending || quickGenerateMutation.isPending
-  const error = generateMutation.error || quickGenerateMutation.error
+  const isLoading = generateMutation.isPending || quickGenerateMutation.isPending || youtubeGenerateMutation.isPending
+  const error = generateMutation.error || quickGenerateMutation.error || youtubeGenerateMutation.error
 
   const handleEnhancePrompt = () => {
     if (!prompt.trim()) return
@@ -102,9 +114,12 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   }
 
   const handleGenerate = () => {
-    if (!prompt.trim()) return
+    if (mode === 'youtube' && !youtubeUrl.trim()) return
+    if (mode !== 'youtube' && !prompt.trim()) return
 
-    if (mode === 'intent') {
+    if (mode === 'youtube') {
+      youtubeGenerateMutation.mutate({ youtubeUrl, aspectRatio, style })
+    } else if (mode === 'intent') {
       quickGenerateMutation.mutate({ videoIntent: prompt, aspectRatio, style })
     } else if (mode === 'reference' && uploadedImages.length > 0) {
       const referenceImages = uploadedImages.map((img) => ({
@@ -167,8 +182,8 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       />
 
       {/* Mode Toggle */}
-      <div className="grid grid-cols-3 gap-2">
-        {(['prompt', 'reference', 'intent'] as const).map((m) => (
+      <div className="grid grid-cols-4 gap-2">
+        {(['prompt', 'reference', 'intent', 'youtube'] as const).map((m) => (
           <button
             key={m}
             type="button"
@@ -178,7 +193,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
               mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
             )}
           >
-            {m === 'prompt' ? '✏️ Prompt' : m === 'reference' ? '🖼️ Reference' : '🎬 Intent'}
+            {m === 'prompt' ? '✏️ Prompt' : m === 'reference' ? '🖼️ Reference' : m === 'intent' ? '🎬 Intent' : '▶️ YouTube'}
           </button>
         ))}
       </div>
@@ -263,6 +278,23 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* YouTube Mode */}
+      {mode === 'youtube' && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">YouTube Video URL</label>
+          <Input
+            type="url"
+            value={youtubeUrl}
+            onChange={(e) => setYoutubeUrl(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=..."
+            disabled={isLoading}
+          />
+          <p className="text-xs text-muted-foreground">
+            Paste a YouTube link and we'll create a thumbnail based on the video's title and description
+          </p>
         </div>
       )}
 
@@ -360,7 +392,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       {/* Generate Button */}
       <Button
         onClick={handleGenerate}
-        disabled={isLoading || !prompt.trim() || (mode === 'reference' && uploadedImages.length === 0)}
+        disabled={isLoading || (mode === 'youtube' ? !youtubeUrl.trim() : !prompt.trim()) || (mode === 'reference' && uploadedImages.length === 0)}
         className="w-full"
       >
         {isLoading ? (
