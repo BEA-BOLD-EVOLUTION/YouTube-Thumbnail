@@ -43,10 +43,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
               const supabase = getSupabase()
               if (!supabase) return {}
               const { data: { session } } = await supabase.auth.getSession()
-              if (session?.access_token) {
-                return { Authorization: `Bearer ${session.access_token}` }
+              if (!session) return {}
+
+              // If the token expires within 60s, refresh proactively
+              const expiresAt = session.expires_at ?? 0
+              const needsRefresh = expiresAt - Math.floor(Date.now() / 1000) < 60
+
+              if (needsRefresh) {
+                const { data: { session: refreshed } } = await supabase.auth.refreshSession()
+                if (refreshed?.access_token) {
+                  return { Authorization: `Bearer ${refreshed.access_token}` }
+                }
+                return {}
               }
-              return {}
+
+              return { Authorization: `Bearer ${session.access_token}` }
             } catch {
               return {}
             }

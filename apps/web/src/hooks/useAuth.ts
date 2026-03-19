@@ -20,8 +20,17 @@ export function useAuth() {
 
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      setUser(session?.user ?? null)
+
+      // If stored session is expired or about to expire, try refreshing
+      if (session && session.expires_at && session.expires_at - Math.floor(Date.now() / 1000) < 60) {
+        const { data: { session: refreshed } } = await supabase.auth.refreshSession()
+        setSession(refreshed)
+        setUser(refreshed?.user ?? null)
+      } else {
+        setSession(session)
+        setUser(session?.user ?? null)
+      }
+
       setLoading(false)
     }
     getSession()
