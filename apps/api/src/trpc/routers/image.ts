@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { router, protectedProcedure } from '../trpc'
+import { router, protectedProcedure, publicProcedure } from '../trpc'
 import { TRPCError } from '@trpc/server'
 import {
   generateStartingImage,
@@ -18,19 +18,23 @@ function decryptApiKey(encrypted: string | null): string | null {
   return Buffer.from(encrypted.slice(4), 'base64').toString('utf8')
 }
 
-async function getContext(ctx: { prisma: any; user: { id: string } }) {
-  const user = await ctx.prisma.user.findUnique({
-    where: { id: ctx.user.id },
-    select: { geminiApiKey: true, useOwnGemini: true, geminiModel: true },
-  })
+async function getContext(ctx: { prisma: any; user?: { id: string } | null }) {
+  const userRecord = ctx.user
+    ? await ctx.prisma.user.findUnique({
+        where: { id: ctx.user.id },
+        select: { geminiApiKey: true, useOwnGemini: true, geminiModel: true },
+      })
+    : null
 
   const userApiKey =
-    user?.useOwnGemini && user?.geminiApiKey ? decryptApiKey(user.geminiApiKey) : null
+    userRecord?.useOwnGemini && userRecord?.geminiApiKey
+      ? decryptApiKey(userRecord.geminiApiKey)
+      : null
 
   // Pro model = BYOK only (no paid subscription required)
   const hasByok = !!userApiKey
 
-  return { user, userApiKey, hasByok }
+  return { user: userRecord, userApiKey, hasByok }
 }
 
 export const imageRouter = router({
@@ -154,7 +158,8 @@ export const imageRouter = router({
       }
     }),
 
-  suggestPrompt: protectedProcedure
+  // Allow prompt enhancement without requiring auth so users can try the feature
+  suggestPrompt: publicProcedure
     .input(
       z.object({
         videoIntent: z.string().min(1).max(1000),
@@ -171,7 +176,7 @@ export const imageRouter = router({
 
       if (!result.usedFallback) {
         await recordAiUsageEvent(ctx.prisma, {
-          userId: ctx.user.id,
+          userId: ctx.user?.id ?? null,
           provider: 'gemini',
           model: 'gemini-2.5-flash-image',
           operation: 'image.suggestPrompt',
