@@ -41,24 +41,43 @@ export function Providers({ children }: { children: React.ReactNode }) {
           async headers() {
             try {
               const supabase = getSupabase()
-              if (!supabase) return {}
-              const { data: { session } } = await supabase.auth.getSession()
-              if (!session) return {}
+              if (!supabase) {
+                console.warn('[trpc] No supabase client — sending request without auth')
+                return {}
+              }
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+              if (sessionError) {
+                console.error('[trpc] getSession error:', sessionError.message)
+                return {}
+              }
+              if (!session) {
+                console.warn('[trpc] No session found — user may not be logged in')
+                return {}
+              }
 
-              // If the token expires within 60s, refresh proactively
+              const now = Math.floor(Date.now() / 1000)
               const expiresAt = session.expires_at ?? 0
-              const needsRefresh = expiresAt - Math.floor(Date.now() / 1000) < 60
+              const ttl = expiresAt - now
+              console.log(`[trpc] Session token TTL: ${ttl}s | expires_at: ${expiresAt} | now: ${now} | user: ${session.user?.email}`)
 
-              if (needsRefresh) {
-                const { data: { session: refreshed } } = await supabase.auth.refreshSession()
+              if (ttl < 60) {
+                console.log('[trpc] Token expiring soon, refreshing...')
+                const { data: { session: refreshed }, error: refreshError } = await supabase.auth.refreshSession()
+                if (refreshError) {
+                  console.error('[trpc] refreshSession error:', refreshError.message)
+                  return {}
+                }
                 if (refreshed?.access_token) {
+                  console.log('[trpc] Token refreshed successfully, new TTL:', (refreshed.expires_at ?? 0) - now, 's')
                   return { Authorization: `Bearer ${refreshed.access_token}` }
                 }
+                console.warn('[trpc] refreshSession returned no access_token')
                 return {}
               }
 
               return { Authorization: `Bearer ${session.access_token}` }
-            } catch {
+            } catch (err) {
+              console.error('[trpc] headers() exception:', err)
               return {}
             }
           },

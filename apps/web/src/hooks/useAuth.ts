@@ -19,11 +19,24 @@ export function useAuth() {
     }
 
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('[useAuth] getSession error:', sessionError.message)
+      }
+
+      const now = Math.floor(Date.now() / 1000)
+      const expiresAt = session?.expires_at ?? 0
+      const ttl = expiresAt - now
+      console.log(`[useAuth] Initial session: user=${session?.user?.email || 'none'} | TTL=${ttl}s | expires_at=${expiresAt}`)
 
       // If stored session is expired or about to expire, try refreshing
-      if (session && session.expires_at && session.expires_at - Math.floor(Date.now() / 1000) < 60) {
-        const { data: { session: refreshed } } = await supabase.auth.refreshSession()
+      if (session && session.expires_at && session.expires_at - now < 60) {
+        console.log('[useAuth] Session expired/expiring, refreshing...')
+        const { data: { session: refreshed }, error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          console.error('[useAuth] refreshSession error:', refreshError.message)
+        }
+        console.log(`[useAuth] After refresh: user=${refreshed?.user?.email || 'none'} | TTL=${(refreshed?.expires_at ?? 0) - now}s`)
         setSession(refreshed)
         setUser(refreshed?.user ?? null)
       } else {
@@ -37,6 +50,7 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
+        console.log(`[useAuth] onAuthStateChange: event=${event} user=${session?.user?.email || 'none'}`)
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)

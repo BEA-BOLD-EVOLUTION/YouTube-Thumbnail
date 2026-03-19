@@ -13,6 +13,8 @@ export const publicProcedure = t.procedure
 
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.user) {
+    const authHeader = ctx.req?.headers?.authorization
+    console.error(`[protected] UNAUTHORIZED | path: ${ctx.req?.path || ctx.req?.url || '?'} | auth header present: ${!!authHeader} | token prefix: ${authHeader ? authHeader.slice(0, 15) + '...' : 'NONE'}`)
     throw new TRPCError({
       code: 'UNAUTHORIZED',
       message: 'Authentication required. Please sign in.',
