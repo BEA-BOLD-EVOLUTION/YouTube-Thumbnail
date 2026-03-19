@@ -170,6 +170,7 @@ export const imageRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      console.log('suggestPrompt input:', input)
       const { userApiKey } = await getContext(ctx)
 
       const result = await suggestImagePrompt(input.videoIntent, userApiKey, input.referenceImages)

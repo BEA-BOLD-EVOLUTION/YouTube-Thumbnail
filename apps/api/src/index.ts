@@ -26,6 +26,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
   /https:\/\/youtube-thumbnail.*\.vercel\.app$/,
+  'https://web-production-8640b.up.railway.app',
 ]
 
 app.use(
