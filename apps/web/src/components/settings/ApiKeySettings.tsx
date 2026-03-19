@@ -97,7 +97,7 @@ export function ApiKeySettings() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-base font-medium">Gemini API Key</Label>
+                <span className="text-base font-medium">Gemini API Key</span>
                 <p className="text-sm text-muted-foreground">
                   Use your own Google AI key for Pro model access
                 </p>
@@ -108,9 +108,9 @@ export function ApiKeySettings() {
                     checked={settings.gemini.useOwnKey}
                     onCheckedChange={(checked) => toggleKeySource.mutate({ useOwnKey: checked })}
                   />
-                  <Label className="text-sm">
+                  <span className="text-sm">
                     {settings.gemini.useOwnKey ? 'Using your key' : 'Using platform'}
-                  </Label>
+                  </span>
                 </div>
               )}
             </div>

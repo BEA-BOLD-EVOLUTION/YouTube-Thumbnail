@@ -275,7 +275,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
 
           {enhancedPrompt && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-green-500">3. Enhanced Prompt</label>
+              <span className="text-sm font-medium text-green-500">3. Enhanced Prompt</span>
               <div className="p-3 bg-muted/50 border border-green-500/30 rounded-lg">
                 <p className="text-sm whitespace-pre-wrap">{enhancedPrompt}</p>
               </div>
@@ -288,7 +288,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       {mode === 'youtube' && (
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">1. Choose Template Style</label>
+            <span className="text-sm font-medium">1. Choose Template Style</span>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -383,7 +383,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
 
           {enhancedPrompt && (
             <div className="space-y-1 mt-2">
-              <label className="text-xs font-medium text-green-500">Enhanced Prompt</label>
+              <span className="text-xs font-medium text-green-500">Enhanced Prompt</span>
               <div className="p-2 bg-muted/50 border border-green-500/30 rounded-lg">
                 <p className="text-xs whitespace-pre-wrap">{enhancedPrompt}</p>
               </div>
