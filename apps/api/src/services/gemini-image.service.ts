@@ -469,6 +469,7 @@ function getClient(
   
   // User has their own key - always use it
   if (userApiKey) {
+    console.log('[Gemini] getClient: using user key', { model, allowPlatformKeyForPro })
     return { client: new GoogleGenAI({ apiKey: userApiKey }), usedOwnKey: true, platformKeyIndex: null }
   }
   
@@ -476,6 +477,7 @@ function getClient(
   if (isPro) {
     if (allowPlatformKeyForPro) {
       const { client, platformKeyIndex } = getPlatformClient()
+      console.log('[Gemini] getClient: platform key for pro?', { model, platformKeyIndex, hasClient: !!client })
       if (client) return { client, usedOwnKey: false, platformKeyIndex }
     }
     return { client: null, usedOwnKey: false, platformKeyIndex: null }
@@ -484,6 +486,7 @@ function getClient(
   // Free tier can use platform key
   {
     const { client, platformKeyIndex } = getPlatformClient()
+    console.log('[Gemini] getClient: platform key for flash', { model, platformKeyIndex, hasClient: !!client })
     return { client, usedOwnKey: false, platformKeyIndex }
   }
 }
@@ -555,7 +558,13 @@ export async function generateStartingImage(
       }
     }
     
-    console.log('[ImageGen] Using model:', model, 'aspectRatio:', params.aspectRatio, 'referenceCount:', referenceCount, 'searchGrounding:', !!params.enableSearchGrounding, 'usedOwnKey:', usedOwnKey)
+    console.log('[ImageGen] Start', {
+      model,
+      aspectRatio: params.aspectRatio,
+      referenceCount,
+      searchGrounding: !!params.enableSearchGrounding,
+      usedOwnKey,
+    })
     
     const config: Record<string, any> = {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
@@ -661,7 +670,14 @@ export async function generateStartingImage(
       error: 'No image was generated. The model may not support image generation for this prompt.',
     }
   } catch (error) {
-    console.error('Image generation error:', error)
+    console.error('Image generation error:', {
+      error,
+      model,
+      aspectRatio: params.aspectRatio,
+      referenceCount: params.referenceImages?.length || 0,
+      usedOwnKey,
+      allowPlatformKeyForPro: params.allowPlatformKeyForPro,
+    })
     
     let errorMessage = error instanceof Error ? error.message : 'Unknown error during image generation'
 
@@ -723,7 +739,7 @@ export async function suggestImagePrompt(
     ? buildReferencePrompt(videoIntent, 'cinematic', imageCount)
     : enhancePromptForImageGeneration(videoIntent, 'cinematic')
 
-  const { client: genai } = getClient(userApiKey)
+  const { client: genai, usedOwnKey } = getClient(userApiKey)
 
   if (!genai) {
     return { success: true, prompt: fallbackPrompt, usedFallback: true }
@@ -819,6 +835,13 @@ Respond with ONLY the image prompt, no explanations.`
 
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text
 
+    console.log('[SuggestPrompt] success', {
+      hasImages,
+      imageCount,
+      usedOwnKey,
+      usedFallback: !text,
+    })
+
     if (text) {
       return { success: true, prompt: text.trim(), usedFallback: false }
     }
@@ -826,7 +849,12 @@ Respond with ONLY the image prompt, no explanations.`
     // If the provider returns no text, fall back locally instead of failing.
     return { success: true, prompt: fallbackPrompt, usedFallback: true }
   } catch (error) {
-    console.error('Prompt suggestion error:', error)
+    console.error('Prompt suggestion error:', {
+      error,
+      hasImages,
+      imageCount,
+      usedOwnKey,
+    })
 
     // When rate-limited or erroring, fall back locally instead of breaking the button.
     // We intentionally do not surface provider error details here to avoid confusing

@@ -176,14 +176,18 @@ export const imageRouter = router({
       const result = await suggestImagePrompt(input.videoIntent, userApiKey, input.referenceImages)
 
       if (!result.usedFallback) {
-        await recordAiUsageEvent(ctx.prisma, {
-          userId: ctx.user?.id ?? null,
-          provider: 'gemini',
-          model: 'gemini-2.5-flash-image',
-          operation: 'image.suggestPrompt',
-          source: 'trpc.image.suggestPrompt',
-          usedOwnKey: !!userApiKey,
-        })
+        try {
+          await recordAiUsageEvent(ctx.prisma, {
+            userId: ctx.user?.id ?? null,
+            provider: 'gemini',
+            model: 'gemini-2.5-flash-image',
+            operation: 'image.suggestPrompt',
+            source: 'trpc.image.suggestPrompt',
+            usedOwnKey: !!userApiKey,
+          })
+        } catch (err) {
+          console.warn('[suggestPrompt] Failed to record AI usage event (non-blocking):', err)
+        }
       }
 
       if (!result.success) {
