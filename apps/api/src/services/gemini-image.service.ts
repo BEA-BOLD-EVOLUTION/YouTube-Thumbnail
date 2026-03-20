@@ -320,6 +320,22 @@ function enhancePromptForImageGeneration(
   hasReference?: boolean,
   skipStylePrefix?: boolean
 ): string {
+  // When skipStylePrefix is set, the prompt already contains its own style
+  // (e.g. YouTube template output from suggestImagePrompt). Don't rewrite it.
+  if (skipStylePrefix) {
+    let enhanced = prompt
+    
+    if (aspectRatio === '16:9') {
+      enhanced += '\n\nThe composition is wide, utilizing the horizontal frame for maximum impact.'
+    } else if (aspectRatio === '9:16') {
+      enhanced += '\n\nThe composition is vertical, optimized for portrait orientation.'
+    } else if (aspectRatio === '1:1') {
+      enhanced += '\n\nThe composition is balanced and centered in a square format.'
+    }
+    
+    return enhanced
+  }
+
   // Step 1: Intelligent enhancement (transform poor prompts per official guidance)
   const { enhanced: smartPrompt } = intelligentPromptEnhancement(prompt)
   
@@ -735,7 +751,8 @@ export async function generateStartingImage(
 export async function suggestImagePrompt(
   videoIntent: string,
   userApiKey?: string | null,
-  referenceImages?: Array<{ base64: string; mimeType: string }>
+  referenceImages?: Array<{ base64: string; mimeType: string }>,
+  options?: { preserveStyleInstructions?: boolean }
 ): Promise<{ success: boolean; prompt?: string; error?: string; usedFallback?: boolean }> {
   // Always prepare a local fallback so the UX stays functional even if:
   // - the platform key is missing during deploy/restart
@@ -745,7 +762,9 @@ export async function suggestImagePrompt(
   const imageCount = referenceImages?.length || 0
   const fallbackPrompt = hasImages
     ? buildReferencePrompt(videoIntent, 'cinematic', imageCount)
-    : enhancePromptForImageGeneration(videoIntent, 'cinematic')
+    : options?.preserveStyleInstructions
+      ? videoIntent  // YouTube templates already contain style; don't rewrite
+      : enhancePromptForImageGeneration(videoIntent, 'cinematic')
 
   const { client: genai, usedOwnKey } = getClient(userApiKey)
 
@@ -812,6 +831,30 @@ Now analyze the uploaded image${imageCount > 1 ? 's' : ''} and generate a prompt
 4. Ends with style, lighting, and quality descriptors
 
 Respond with ONLY the enhanced prompt, no explanations.`
+      : options?.preserveStyleInstructions
+      ? `You are an expert at creating image generation prompts for YouTube thumbnails.
+
+The user has provided a structured thumbnail brief with specific STYLE REQUIREMENTS and INSTRUCTIONS.
+Your job is to expand this into a detailed, vivid image generation prompt while STRICTLY preserving
+the style requirements described. Do NOT convert illustration/cartoon styles into photorealistic.
+
+Here is the brief:
+"""${videoIntent}"""
+
+YOUR TASK:
+1. KEEP the exact art style described (2D cartoon illustration, thick outlines, flat colors, etc.)
+2. Analyze the video title in the brief and create specific, concrete visual elements that represent the content
+3. Describe each visual element in detail (what objects, what colors, what icons, what text)
+4. Write the prompt as one cohesive, detailed paragraph describing the final thumbnail image
+5. Include the specific text/headlines that should appear in the thumbnail
+6. Maintain all style rules: bold outlines, flat colors, 3D block text, cartoon icons
+
+IMPORTANT:
+- The output must describe a 2D cartoon illustration, NOT a photograph
+- NO camera terms, NO lens types, NO lighting setups, NO bokeh, NO depth of field
+- YES: bold outlines, flat vibrant colors, 3D text with drop shadows, cartoon icons, clean graphic design
+
+Respond with ONLY the enhanced image prompt, no explanations.`
       : `You are an expert at creating starting images for AI video generation.
 
 Given this video intent/concept: "${videoIntent}"

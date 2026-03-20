@@ -332,8 +332,8 @@ export const imageRouter = router({
       // Create prompt from metadata using selected template
       const videoIntent = createThumbnailPromptFromMetadata(metadata, input.templateType)
 
-      // Generate suggested prompt using AI
-      const promptResult = await suggestImagePrompt(videoIntent, userApiKey)
+      // Generate suggested prompt using AI — preserve template style instructions
+      const promptResult = await suggestImagePrompt(videoIntent, userApiKey, undefined, { preserveStyleInstructions: true })
       await recordAiUsageEvent(ctx.prisma, {
         userId: ctx.user.id,
         provider: 'gemini',
