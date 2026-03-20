@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { ThumbnailGenerator } from '@/components/create/ThumbnailGenerator'
 import { ApiKeySettings } from '@/components/settings/ApiKeySettings'
 import { useAuth } from '@/hooks/useAuth'
@@ -131,6 +132,13 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{user?.email}</span>
+          <Link
+            href="/help"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            title="Help & Walkthrough"
+          >
+            ❓
+          </Link>
           <ApiKeySettings />
           <button
             onClick={() => signOut()}
