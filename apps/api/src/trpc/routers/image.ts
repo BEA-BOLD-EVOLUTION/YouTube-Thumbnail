@@ -400,7 +400,7 @@ export const imageRouter = router({
           title: metadata.title,
           channelTitle: metadata.channelTitle,
         },
-        suggestedPrompt: promptResult.prompt,
+        suggestedPrompt: finalPrompt,
         image: {
           base64: imageResult.image!.base64,
           mimeType: imageResult.image!.mimeType,
@@ -534,7 +534,7 @@ export const imageRouter = router({
           title: metadata.title,
           authorName: metadata.authorName,
         },
-        suggestedPrompt: promptResult.prompt,
+        suggestedPrompt: finalPrompt,
         image: {
           base64: imageResult.image!.base64,
           mimeType: imageResult.image!.mimeType,
