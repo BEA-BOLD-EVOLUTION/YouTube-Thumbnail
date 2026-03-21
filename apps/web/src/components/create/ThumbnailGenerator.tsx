@@ -45,7 +45,8 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
   const [mode, setMode] = useState<'prompt' | 'intent' | 'reference' | 'video'>('prompt')
   const [videoUrl, setVideoUrl] = useState('')
-  const [videoTemplate, setVideoTemplate] = useState<'technical-guide' | 'do-this-not-that'>('technical-guide')
+  const [videoTemplate, setVideoTemplate] = useState<'technical-guide' | 'do-this-not-that' | 'none'>('none')
+  const [videoCustomPrompt, setVideoCustomPrompt] = useState('')
   const [uploadedImages, setUploadedImages] = useState<{ dataUrl: string; file: File }[]>([])
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
@@ -136,10 +137,12 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     if (mode !== 'video' && !prompt.trim()) return
 
     if (mode === 'video') {
+      const templateType = videoTemplate === 'none' ? 'none' as const : videoTemplate
+      const customPrompt = videoTemplate === 'none' ? videoCustomPrompt.trim() || undefined : undefined
       if (isTikTokUrl(videoUrl)) {
-        tiktokGenerateMutation.mutate({ tiktokUrl: videoUrl, aspectRatio, style, templateType: videoTemplate })
+        tiktokGenerateMutation.mutate({ tiktokUrl: videoUrl, aspectRatio, style, templateType, customPrompt })
       } else {
-        youtubeGenerateMutation.mutate({ youtubeUrl: videoUrl, aspectRatio, style, templateType: videoTemplate })
+        youtubeGenerateMutation.mutate({ youtubeUrl: videoUrl, aspectRatio, style, templateType, customPrompt })
       }
       return
     }
@@ -314,8 +317,25 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       {mode === 'video' && (
         <div className="space-y-4">
           <div className="space-y-2">
-            <span className="text-sm font-medium">1. Choose Template Style</span>
-            <div className="grid grid-cols-2 gap-2">
+            <span className="text-sm font-medium">1. Template Style (optional)</span>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setVideoTemplate('none')}
+                disabled={isLoading}
+                className={cn(
+                  'p-3 rounded-lg border-2 text-left transition-all',
+                  videoTemplate === 'none'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-muted hover:border-primary/50'
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">✏️</span>
+                  <span className="font-semibold text-sm">Custom</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Write your own prompt</p>
+              </button>
               <button
                 type="button"
                 onClick={() => setVideoTemplate('technical-guide')}
@@ -352,9 +372,26 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
               </button>
             </div>
           </div>
+
+          {videoTemplate === 'none' && (
+            <div className="space-y-2">
+              <label htmlFor="video-custom-prompt" className="text-sm font-medium">2. Describe the thumbnail</label>
+              <Textarea
+                id="video-custom-prompt"
+                value={videoCustomPrompt}
+                onChange={(e) => setVideoCustomPrompt(e.target.value)}
+                placeholder="e.g., A dramatic face reaction with bold text, bright colors, high contrast..."
+                className="min-h-20 resize-none"
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Your prompt will be combined with the video's title for context
+              </p>
+            </div>
+          )}
           
           <div className="space-y-2">
-            <label htmlFor="video-url" className="text-sm font-medium">2. Video URL</label>
+            <label htmlFor="video-url" className="text-sm font-medium">{videoTemplate === 'none' ? '3' : '2'}. Video URL</label>
             <Input
               id="video-url"
               type="url"
@@ -364,7 +401,9 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              Supports YouTube and TikTok links — we'll analyze the video and create a {videoTemplate === 'technical-guide' ? 'Technical Guide' : 'Do This; Not That'} style thumbnail
+              {videoTemplate === 'none'
+                ? "Supports YouTube and TikTok links — we'll use the video's title as context for your prompt"
+                : `Supports YouTube and TikTok links — we'll analyze the video and create a ${videoTemplate === 'technical-guide' ? 'Technical Guide' : 'Do This; Not That'} style thumbnail`}
             </p>
           </div>
         </div>

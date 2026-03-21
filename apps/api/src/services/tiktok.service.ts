@@ -14,6 +14,7 @@ interface TikTokMetadata {
  * Extract video ID from various TikTok URL formats
  * Supports:
  *   - https://www.tiktok.com/@user/video/1234567890
+ *   - https://www.tiktok.com/@user/photo/1234567890
  *   - https://vm.tiktok.com/ZMxxxxxx/
  *   - https://www.tiktok.com/t/ZMxxxxxx/
  */
@@ -21,9 +22,9 @@ export function extractTikTokVideoId(url: string): string | null {
   try {
     const urlObj = new URL(url)
 
-    // tiktok.com/@user/video/ID
-    const videoMatch = urlObj.pathname.match(/\/video\/(\d+)/)
-    if (videoMatch) return videoMatch[1]
+    // tiktok.com/@user/video/ID or tiktok.com/@user/photo/ID
+    const contentMatch = urlObj.pathname.match(/\/(?:video|photo)\/(\d+)/)
+    if (contentMatch) return contentMatch[1]
 
     // vm.tiktok.com or tiktok.com/t/ short links — we can't resolve the
     // numeric ID without following the redirect, but we still recognise

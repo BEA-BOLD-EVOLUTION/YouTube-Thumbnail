@@ -293,7 +293,8 @@ export const imageRouter = router({
     .input(
       z.object({
         youtubeUrl: z.string().url(),
-        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context']).optional().default('technical-guide'),
+        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context', 'none']).optional().default('technical-guide'),
+        customPrompt: z.string().max(2000).optional(),
         aspectRatio: z
           .enum(['16:9', '9:16', '1:1', '4:3', '3:4'])
           .optional()
@@ -330,37 +331,49 @@ export const imageRouter = router({
         })
       }
 
-      // Create prompt from metadata using selected template
-      const videoIntent = createThumbnailPromptFromMetadata(metadata, input.templateType)
+      // When using custom prompt with no template, combine user prompt with video context
+      const useCustomPrompt = input.templateType === 'none' && input.customPrompt?.trim()
 
-      // Generate suggested prompt using AI — preserve template style instructions
-      const promptResult = await suggestImagePrompt(videoIntent, userApiKey, undefined, { preserveStyleInstructions: true })
-      await recordAiUsageEvent(ctx.prisma, {
-        userId: ctx.user.id,
-        provider: 'gemini',
-        model: 'gemini-2.5-flash-image',
-        operation: 'image.suggestPrompt',
-        source: 'trpc.image.generateFromYouTube',
-        usedOwnKey: !!userApiKey,
-      })
+      let finalPrompt: string
+      let skipStylePrefix: boolean
 
-      if (!promptResult.success || !promptResult.prompt) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to create prompt from YouTube video',
+      if (useCustomPrompt) {
+        // Custom prompt mode: combine user's prompt with video metadata context
+        finalPrompt = `Create a YouTube thumbnail based on the following instructions:\n\n${input.customPrompt}\n\nVideo context — Title: "${metadata.title}"${metadata.channelTitle ? `, Channel: "${metadata.channelTitle}"` : ''}`
+        skipStylePrefix = false
+      } else {
+        // Template mode: use the structured template system
+        const templateType = input.templateType === 'none' ? 'technical-guide' : input.templateType
+        const videoIntent = createThumbnailPromptFromMetadata(metadata, templateType)
+        const promptResult = await suggestImagePrompt(videoIntent, userApiKey, undefined, { preserveStyleInstructions: true })
+        await recordAiUsageEvent(ctx.prisma, {
+          userId: ctx.user.id,
+          provider: 'gemini',
+          model: 'gemini-2.5-flash-image',
+          operation: 'image.suggestPrompt',
+          source: 'trpc.image.generateFromYouTube',
+          usedOwnKey: !!userApiKey,
         })
+
+        if (!promptResult.success || !promptResult.prompt) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create prompt from YouTube video',
+          })
+        }
+        finalPrompt = promptResult.prompt
+        skipStylePrefix = true
       }
 
-      // Generate the thumbnail — skip style prefix because YouTube templates
-      // already embed their own style instructions ("2D digital illustration", etc.)
+      // Generate the thumbnail
       const imageResult = await generateStartingImage({
-        prompt: promptResult.prompt,
+        prompt: finalPrompt,
         aspectRatio: input.aspectRatio as GenerateImageParams['aspectRatio'],
         style: input.style as GenerateImageParams['style'],
         userApiKey,
         model,
         allowPlatformKeyForPro: false,
-        skipStylePrefix: true,
+        skipStylePrefix,
       })
 
       await recordAiUsageEvent(ctx.prisma, {
@@ -402,7 +415,8 @@ export const imageRouter = router({
     .input(
       z.object({
         tiktokUrl: z.string().url(),
-        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context']).optional().default('technical-guide'),
+        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context', 'none']).optional().default('technical-guide'),
+        customPrompt: z.string().max(2000).optional(),
         aspectRatio: z
           .enum(['16:9', '9:16', '1:1', '4:3', '3:4'])
           .optional()
@@ -445,42 +459,55 @@ export const imageRouter = router({
         })
       }
 
-      // Reuse YouTube template system — it works on any title + description
-      const videoIntent = createThumbnailPromptFromMetadata(
-        {
-          videoId: metadata.videoId,
-          title: metadata.title,
-          description: '',
-          channelTitle: metadata.authorName,
-        },
-        input.templateType
-      )
+      // When using custom prompt with no template, combine user prompt with video context
+      const useCustomPrompt = input.templateType === 'none' && input.customPrompt?.trim()
 
-      const promptResult = await suggestImagePrompt(videoIntent, userApiKey, undefined, { preserveStyleInstructions: true })
-      await recordAiUsageEvent(ctx.prisma, {
-        userId: ctx.user.id,
-        provider: 'gemini',
-        model: 'gemini-2.5-flash-image',
-        operation: 'image.suggestPrompt',
-        source: 'trpc.image.generateFromTikTok',
-        usedOwnKey: !!userApiKey,
-      })
+      let finalPrompt: string
+      let skipStylePrefix: boolean
 
-      if (!promptResult.success || !promptResult.prompt) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to create prompt from TikTok video',
+      if (useCustomPrompt) {
+        finalPrompt = `Create a YouTube thumbnail based on the following instructions:\n\n${input.customPrompt}\n\nVideo context — Title: "${metadata.title}"${metadata.authorName ? `, Creator: "${metadata.authorName}"` : ''}`
+        skipStylePrefix = false
+      } else {
+        const templateType = input.templateType === 'none' ? 'technical-guide' : input.templateType
+        const videoIntent = createThumbnailPromptFromMetadata(
+          {
+            videoId: metadata.videoId,
+            title: metadata.title,
+            description: '',
+            channelTitle: metadata.authorName,
+          },
+          templateType
+        )
+
+        const promptResult = await suggestImagePrompt(videoIntent, userApiKey, undefined, { preserveStyleInstructions: true })
+        await recordAiUsageEvent(ctx.prisma, {
+          userId: ctx.user.id,
+          provider: 'gemini',
+          model: 'gemini-2.5-flash-image',
+          operation: 'image.suggestPrompt',
+          source: 'trpc.image.generateFromTikTok',
+          usedOwnKey: !!userApiKey,
         })
+
+        if (!promptResult.success || !promptResult.prompt) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create prompt from TikTok video',
+          })
+        }
+        finalPrompt = promptResult.prompt
+        skipStylePrefix = true
       }
 
       const imageResult = await generateStartingImage({
-        prompt: promptResult.prompt,
+        prompt: finalPrompt,
         aspectRatio: input.aspectRatio as GenerateImageParams['aspectRatio'],
         style: input.style as GenerateImageParams['style'],
         userApiKey,
         model,
         allowPlatformKeyForPro: false,
-        skipStylePrefix: true,
+        skipStylePrefix,
       })
 
       await recordAiUsageEvent(ctx.prisma, {
