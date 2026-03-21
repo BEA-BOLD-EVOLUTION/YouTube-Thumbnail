@@ -43,6 +43,12 @@ export function extractVideoId(url: string): string | null {
       const videoId = urlObj.pathname.split('/embed/')[1]?.split('?')[0]
       if (videoId) return videoId
     }
+
+    // youtube.com/shorts/...
+    if (urlObj.pathname.includes('/shorts/')) {
+      const videoId = urlObj.pathname.split('/shorts/')[1]?.split('?')[0]
+      if (videoId) return videoId
+    }
     
     return null
   } catch {
