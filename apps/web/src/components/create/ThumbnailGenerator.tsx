@@ -43,9 +43,9 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9')
   const [style, setStyle] = useState<Style>('photorealistic')
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
-  const [mode, setMode] = useState<'prompt' | 'intent' | 'reference' | 'youtube'>('prompt')
-  const [youtubeUrl, setYoutubeUrl] = useState('')
-  const [youtubeTemplate, setYoutubeTemplate] = useState<'technical-guide' | 'do-this-not-that'>('technical-guide')
+  const [mode, setMode] = useState<'prompt' | 'intent' | 'reference' | 'video'>('prompt')
+  const [videoUrl, setVideoUrl] = useState('')
+  const [videoTemplate, setVideoTemplate] = useState<'technical-guide' | 'do-this-not-that'>('technical-guide')
   const [uploadedImages, setUploadedImages] = useState<{ dataUrl: string; file: File }[]>([])
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
@@ -83,6 +83,16 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     },
   })
 
+  const tiktokGenerateMutation = trpc.image.generateFromTikTok.useMutation({
+    onSuccess: (data: any) => {
+      if (data.success && data.image) {
+        setGeneratedImage(data.image)
+        const dataUrl = `data:${data.image.mimeType};base64,${data.image.base64}`
+        onImageGenerated?.(dataUrl, data.image.prompt)
+      }
+    },
+  })
+
   const suggestPromptMutation = trpc.image.suggestPrompt.useMutation({
     onSuccess: (data: any) => {
       if (data.success && data.suggestedPrompt) {
@@ -93,8 +103,8 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     onError: () => setIsEnhancing(false),
   })
 
-  const isLoading = generateMutation.isPending || quickGenerateMutation.isPending || youtubeGenerateMutation.isPending
-  const error = generateMutation.error || quickGenerateMutation.error || youtubeGenerateMutation.error
+  const isLoading = generateMutation.isPending || quickGenerateMutation.isPending || youtubeGenerateMutation.isPending || tiktokGenerateMutation.isPending
+  const error = generateMutation.error || quickGenerateMutation.error || youtubeGenerateMutation.error || tiktokGenerateMutation.error
 
   const handleEnhancePrompt = () => {
     if (!prompt.trim()) return
@@ -114,13 +124,26 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     setEnhancedPrompt('')
   }
 
-  const handleGenerate = () => {
-    if (mode === 'youtube' && !youtubeUrl.trim()) return
-    if (mode !== 'youtube' && !prompt.trim()) return
+  const isTikTokUrl = (url: string) => {
+    try {
+      const parsed = new URL(url)
+      return parsed.hostname.includes('tiktok.com') || parsed.hostname === 'vm.tiktok.com'
+    } catch { return false }
+  }
 
-    if (mode === 'youtube') {
-      youtubeGenerateMutation.mutate({ youtubeUrl, aspectRatio, style, templateType: youtubeTemplate })
-    } else if (mode === 'intent') {
+  const handleGenerate = () => {
+    if (mode === 'video' && !videoUrl.trim()) return
+    if (mode !== 'video' && !prompt.trim()) return
+
+    if (mode === 'video') {
+      if (isTikTokUrl(videoUrl)) {
+        tiktokGenerateMutation.mutate({ tiktokUrl: videoUrl, aspectRatio, style, templateType: videoTemplate })
+      } else {
+        youtubeGenerateMutation.mutate({ youtubeUrl: videoUrl, aspectRatio, style, templateType: videoTemplate })
+      }
+      return
+    }
+    if (mode === 'intent') {
       quickGenerateMutation.mutate({ videoIntent: prompt, aspectRatio, style })
     } else if (mode === 'reference' && uploadedImages.length > 0) {
       const referenceImages = uploadedImages.map((img) => ({
@@ -185,20 +208,20 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
 
       {/* Mode Toggle */}
       <div className="grid grid-cols-4 gap-2">
-        {(['prompt', 'reference', 'intent', 'youtube'] as const).map((m) => (
+        {(['prompt', 'reference', 'intent', 'video'] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => {
               setMode(m)
-              if (m === 'youtube') setStyle('illustration')
+              if (m === 'video') setStyle('illustration')
             }}
             className={cn(
               'px-3 py-2 rounded-lg text-sm font-medium transition-all',
               mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
             )}
           >
-            {m === 'prompt' ? '✏️ Prompt' : m === 'reference' ? '🖼️ Reference' : m === 'intent' ? '🎬 Intent' : '▶️ YouTube'}
+            {m === 'prompt' ? '✏️ Prompt' : m === 'reference' ? '🖼️ Reference' : m === 'intent' ? '🎬 Intent' : '🔗 Video Link'}
           </button>
         ))}
       </div>
@@ -287,19 +310,19 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
         </div>
       )}
 
-      {/* YouTube Mode */}
-      {mode === 'youtube' && (
+      {/* Video Link Mode (YouTube + TikTok) */}
+      {mode === 'video' && (
         <div className="space-y-4">
           <div className="space-y-2">
             <span className="text-sm font-medium">1. Choose Template Style</span>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setYoutubeTemplate('technical-guide')}
+                onClick={() => setVideoTemplate('technical-guide')}
                 disabled={isLoading}
                 className={cn(
                   'p-3 rounded-lg border-2 text-left transition-all',
-                  youtubeTemplate === 'technical-guide'
+                  videoTemplate === 'technical-guide'
                     ? 'border-primary bg-primary/10'
                     : 'border-muted hover:border-primary/50'
                 )}
@@ -312,11 +335,11 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
               </button>
               <button
                 type="button"
-                onClick={() => setYoutubeTemplate('do-this-not-that')}
+                onClick={() => setVideoTemplate('do-this-not-that')}
                 disabled={isLoading}
                 className={cn(
                   'p-3 rounded-lg border-2 text-left transition-all',
-                  youtubeTemplate === 'do-this-not-that'
+                  videoTemplate === 'do-this-not-that'
                     ? 'border-primary bg-primary/10'
                     : 'border-muted hover:border-primary/50'
                 )}
@@ -331,17 +354,17 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="youtube-url" className="text-sm font-medium">2. YouTube Video URL</label>
+            <label htmlFor="video-url" className="text-sm font-medium">2. Video URL</label>
             <Input
-              id="youtube-url"
+              id="video-url"
               type="url"
-              value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=..."
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="Paste a YouTube or TikTok link..."
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              We'll analyze the video and create a {youtubeTemplate === 'technical-guide' ? 'Technical Guide' : 'Do This; Not That'} style thumbnail
+              Supports YouTube and TikTok links — we'll analyze the video and create a {videoTemplate === 'technical-guide' ? 'Technical Guide' : 'Do This; Not That'} style thumbnail
             </p>
           </div>
         </div>
@@ -442,7 +465,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       {/* Generate Button */}
       <Button
         onClick={handleGenerate}
-        disabled={isLoading || (mode === 'youtube' ? !youtubeUrl.trim() : !prompt.trim()) || (mode === 'reference' && uploadedImages.length === 0)}
+        disabled={isLoading || (mode === 'video' ? !videoUrl.trim() : !prompt.trim()) || (mode === 'reference' && uploadedImages.length === 0)}
         className="w-full"
       >
         {isLoading ? (
@@ -493,7 +516,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
 
       {!generatedImage && uploadedImages.length === 0 && (
         <div className="text-xs text-muted-foreground italic text-center pt-2">
-          💡 Describe your YouTube thumbnail or upload reference images to get started
+          💡 Describe your thumbnail, upload reference images, or paste a video link to get started
         </div>
       )}
 

@@ -11,7 +11,7 @@ A step-by-step guide to creating AI-powered YouTube thumbnails.
    - [Prompt Mode](#prompt-mode)
    - [Reference Mode](#reference-mode)
    - [Intent Mode](#intent-mode)
-   - [YouTube Mode](#youtube-mode)
+   - [Video Link Mode](#video-link-mode)
 3. [Prompt Templates](#prompt-templates)
    - [Subject + Context](#subject--context)
    - [Technical Guide](#technical-guide)
@@ -29,7 +29,7 @@ Open the app and sign in with your authorized email and password.
 
 ### 2. Explore the Generator
 After signing in you'll see the main **Thumbnail Generator** panel with:
-- **Mode tabs** (Prompt, Reference, Intent, YouTube) at the top
+- **Mode tabs** (Prompt, Reference, Intent, Video Link) at the top
 - **Aspect Ratio** selector (16:9, 9:16, 1:1)
 - **Style** selector (Photo, Cinematic, Anime, Illustration, Concept)
 - **Generate Thumbnail** button
@@ -77,24 +77,24 @@ Click the **❓** icon in the header to open the in-app Help page at any time.
 
 ---
 
-### YouTube Mode
-> ▶️ Best for auto-generating thumbnails from an existing YouTube video.
+### Video Link Mode
+> 🔗 Best for auto-generating thumbnails from an existing YouTube or TikTok video.
 
-1. Select the **▶️ YouTube** tab.
+1. Select the **🔗 Video Link** tab.
 2. **Choose a template style:**
    - **✅ Technical Guide** — Single-panel "success outcome" style
    - **⚖️ Do This; Not That** — Split-screen comparison style
-3. **Paste the YouTube video URL** (e.g., `https://youtube.com/watch?v=abc123`).
+3. **Paste a YouTube or TikTok URL** (e.g., `https://youtube.com/watch?v=abc123` or `https://tiktok.com/@user/video/1234567890`).
 4. Click **🎨 Generate Thumbnail**.
 5. The AI extracts the video title, builds a prompt using your chosen template, and generates a bold cartoon-style thumbnail.
 
-> **Note:** YouTube Mode automatically sets the style to **Illustration** for the best results.
+> **Note:** Video Link Mode automatically sets the style to **Illustration** for the best results. TikTok links default to **9:16** (vertical) aspect ratio; YouTube links default to **16:9**.
 
 ---
 
 ## Prompt Templates
 
-Templates are available in **Prompt Mode** (via the 📋 button) and are used automatically in **YouTube Mode**.
+Templates are available in **Prompt Mode** (via the 📋 button) and are used automatically in **Video Link Mode**.
 
 ### Subject + Context
 **📌 Best for:** Informational or educational videos.
@@ -145,7 +145,7 @@ Fill in:
 | Ratio | Use Case |
 |-------|----------|
 | **16:9** 🖥️ | Standard YouTube thumbnail (1280×720) |
-| **9:16** 📱 | YouTube Shorts / mobile-first |
+| **9:16** 📱 | YouTube Shorts, TikTok, mobile-first |
 | **1:1** ⬜ | Square format for social media |
 
 ### Styles
@@ -188,7 +188,7 @@ Settings are saved to your account and persist between sessions.
 
 ### Getting the Best Results
 - **Regenerate** — Each generation is unique. If the first result isn't perfect, click Generate again.
-- **Try both YouTube templates** to see which fits your video content better.
+- **Try both video link templates** to see which fits your video content better.
 - **Use Reference Mode** with thumbnails you admire as inspiration.
 - **Keep text short** — Thumbnails work best with 3–5 words of headline text.
 - **Use high contrast** and saturated colors — the Illustration style is optimized for this.

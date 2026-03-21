@@ -125,9 +125,9 @@ function OverviewSection() {
       <SectionTitle>Welcome to YouTube Thumbnail Generator</SectionTitle>
 
       <p className="text-muted-foreground leading-relaxed">
-        This tool uses Google Gemini AI to create eye-catching YouTube thumbnails
+        This tool uses Google Gemini AI to create eye-catching thumbnails
         in seconds. You can generate thumbnails from text prompts, video ideas,
-        reference images, or directly from a YouTube URL.
+        reference images, or directly from a YouTube or TikTok URL.
       </p>
 
       <div className="border rounded-xl p-5 bg-muted/30 space-y-4">
@@ -139,11 +139,11 @@ function OverviewSection() {
           <StepCard step={2} title="Choose a Mode">
             Pick one of the four generation modes at the top of the generator:
             <strong> Prompt</strong>, <strong>Reference</strong>,{' '}
-            <strong>Intent</strong>, or <strong>YouTube</strong>.
+            <strong>Intent</strong>, or <strong>Video Link</strong>.
           </StepCard>
           <StepCard step={3} title="Provide Input">
-            Enter a description, upload reference images, or paste a YouTube URL
-            depending on the mode you chose.
+            Enter a description, upload reference images, or paste a YouTube/TikTok
+            URL depending on the mode you chose.
           </StepCard>
           <StepCard step={4} title="Pick Aspect Ratio & Style">
             Select <strong>16:9</strong> (standard), <strong>9:16</strong>{' '}
@@ -236,10 +236,10 @@ function ModesSection() {
           </ul>
         </InfoBox>
 
-        <InfoBox icon="▶️" title="YouTube Mode">
+        <InfoBox icon="🔗" title="Video Link Mode">
           <p>
-            Paste a YouTube video URL and the AI will analyze the video title to
-            generate a thumbnail automatically.
+            Paste a YouTube or TikTok URL and the AI will analyze the video
+            title to generate a thumbnail automatically.
           </p>
           <ul className="list-disc list-inside mt-2 space-y-1">
             <li>
@@ -248,9 +248,13 @@ function ModesSection() {
               <em>Do This; Not That</em> (split-screen comparison).
             </li>
             <li>
-              <strong>Step 2:</strong> Paste the full YouTube URL (e.g.,{' '}
+              <strong>Step 2:</strong> Paste a YouTube or TikTok URL (e.g.,{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
                 https://youtube.com/watch?v=...
+              </code>{' '}
+              or{' '}
+              <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                https://tiktok.com/@user/video/...
               </code>
               ).
             </li>
@@ -261,7 +265,11 @@ function ModesSection() {
             </li>
             <li>
               The style is automatically set to <strong>Illustration</strong>{' '}
-              for the best results with YouTube templates.
+              for the best results with video link templates.
+            </li>
+            <li>
+              TikTok links default to <strong>9:16</strong> (vertical) aspect
+              ratio; YouTube links default to <strong>16:9</strong>.
             </li>
           </ul>
         </InfoBox>
@@ -281,7 +289,7 @@ function TemplatesSection() {
         Templates give you a head start by providing a structured prompt format.
         Access them in <strong>Prompt Mode</strong> by clicking the{' '}
         <strong>📋 Templates</strong> button, or they are used automatically in{' '}
-        <strong>YouTube Mode</strong>.
+        <strong>Video Link Mode</strong>.
       </p>
 
       <div className="space-y-4">
@@ -483,8 +491,8 @@ function TipsSection() {
               720). Use this for regular videos.
             </li>
             <li>
-              <strong>9:16</strong> &mdash; Vertical format for YouTube Shorts
-              and mobile-first content.
+              <strong>9:16</strong> &mdash; Vertical format for YouTube Shorts,
+              TikTok, and mobile-first content.
             </li>
             <li>
               <strong>1:1</strong> &mdash; Square format, useful for social
@@ -526,8 +534,8 @@ function TipsSection() {
               unique.
             </li>
             <li>
-              For YouTube Mode, try both template styles (Technical Guide and Do
-              This; Not That) to see which fits your video better.
+              For Video Link Mode, try both template styles (Technical Guide and
+              Do This; Not That) to see which fits your video better.
             </li>
             <li>
               In Reference Mode, upload thumbnails you like as inspiration &mdash;
