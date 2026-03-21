@@ -191,9 +191,12 @@ const STYLE_PROMPTS: Record<string, string> = {
     The color palette is saturated and harmonious with soft cel-shading. 
     The overall mood is warm and inviting with attention to atmospheric details.`,
   
-  'illustration': `A polished digital illustration with clean, professional linework. 
-    The style blends modern concept art techniques with vibrant, well-balanced colors. 
-    Features subtle gradients and thoughtful composition that guides the viewer's eye.`,
+  'illustration': `A bold, high-energy 2D cartoon illustration with thick clean outlines and cel-shading. 
+    Hyper-saturated, candy-colored palette with neon accents and dramatic contrast. 
+    Every element has depth: 3D extruded text, glossy highlights, glowing auras, and radial light bursts. 
+    Dynamic gradient background with energy — radial bursts, floating color orbs, or diagonal light streaks. 
+    Scattered floating details: sparkles, tiny stars, speed lines, confetti, and emoji-style icons for visual density. 
+    The overall feel is explosive, premium, and impossible to scroll past — like a top-tier YouTube thumbnail.`,
   
   'concept-art': `A detailed concept art piece suitable for film or game production. 
     The scene features atmospheric perspective with rich environmental storytelling. 
@@ -832,27 +835,31 @@ Now analyze the uploaded image${imageCount > 1 ? 's' : ''} and generate a prompt
 
 Respond with ONLY the enhanced prompt, no explanations.`
       : options?.preserveStyleInstructions
-      ? `You are an expert at creating image generation prompts for YouTube thumbnails.
+      ? `You are an expert at creating EXPLOSIVE, eye-catching YouTube thumbnail image prompts that POP off the screen.
 
 The user has provided a structured thumbnail brief with specific STYLE REQUIREMENTS and INSTRUCTIONS.
-Your job is to expand this into a detailed, vivid image generation prompt while STRICTLY preserving
+Your job is to expand this into a hyper-detailed, vivid image generation prompt while STRICTLY preserving
 the style requirements described. Do NOT convert illustration/cartoon styles into photorealistic.
+AMPLIFY the visual energy — make everything bolder, more vibrant, more dynamic.
 
 Here is the brief:
 """${videoIntent}"""
 
 YOUR TASK:
-1. KEEP the exact art style described (2D cartoon illustration, thick outlines, flat colors, etc.)
+1. KEEP the exact art style described (2D cartoon illustration, thick outlines, cel-shading, etc.)
 2. Analyze the video title in the brief and create specific, concrete visual elements that represent the content
-3. Describe each visual element in detail (what objects, what colors, what icons, what text)
-4. Write the prompt as one cohesive, detailed paragraph describing the final thumbnail image
-5. Include the specific text/headlines that should appear in the thumbnail
-6. Maintain all style rules: bold outlines, flat colors, 3D block text, cartoon icons
+3. Describe each visual element in LAVISH detail — specific colors, glow effects, dimension, texture, sheen
+4. AMPLIFY visual energy: add radial light bursts, neon glow auras, floating sparkles, speed lines, confetti particles, glossy highlights
+5. Write the prompt as one cohesive, ultra-detailed paragraph describing the final thumbnail image
+6. Include the specific text/headlines that should appear — describe them as MASSIVE 3D extruded block letters with colored drop shadows, slight tilt, and glowing edges
+7. Describe the background as a DYNAMIC gradient with energy (radial burst, diagonal streaks, floating color orbs) — never flat
+8. Fill empty space with floating micro-details: tiny stars, sparkles, emoji-style icons, speed lines
 
 IMPORTANT:
 - The output must describe a 2D cartoon illustration, NOT a photograph
 - NO camera terms, NO lens types, NO lighting setups, NO bokeh, NO depth of field
-- YES: bold outlines, flat vibrant colors, 3D text with drop shadows, cartoon icons, clean graphic design
+- YES: bold outlines, cel-shading, glossy highlights, neon accents, 3D extruded text with colored shadows, radiant glow effects, floating decorative particles
+- The final image should feel EXPLOSIVE and PREMIUM — like a top-tier YouTube thumbnail that demands clicks
 
 Respond with ONLY the enhanced image prompt, no explanations.`
       : `You are an expert at creating starting images for AI video generation.
