@@ -231,13 +231,14 @@ function createBoldHeadlinePrompt(title: string, description: string): string {
 
 STYLE REQUIREMENTS:
 - Bold, high-contrast 2D cartoon illustration with thick clean outlines and cel-shading
-- SIDE-BY-SIDE split composition: one half is dominated by MASSIVE stacked headline text, the other half is a dense cluster of themed cartoon icons and illustrations
+- SIDE-BY-SIDE split composition: one half is dominated by MASSIVE stacked headline text, the other half is a well-arranged cluster of themed cartoon icons and illustrations
 - The headline text should be in MASSIVE, bold 3D extruded block text with black outlines, colored drop shadows, and mixed yellow/white coloring — stacked vertically to fill the entire half
 - Some words in the headline should use a different highlight color (e.g., one word in italic or a contrasting color) for emphasis
 - The icon cluster side features richly detailed cartoon illustrations related to the video topic — drawn with thick outlines, cel-shading, glossy highlights, and depth
-- Floating micro-details scattered throughout the icon side: sparkles, arrows, hearts, stars, coins, engagement emoji icons, growth arrows
+- Small floating accents scattered sparingly on the icon side: sparkles, arrows, hearts, stars, engagement emoji icons
 - Platform branding elements (e.g., TikTok LIVE badge, streaming UI elements) can be integrated into the icon cluster if relevant to the topic
 - The two halves should have dramatically different background colors for strong visual contrast (e.g., deep purple vs warm cream, bold red vs light blue)
+- Backgrounds should be clean — solid colors or simple gradients, NO radial bursts, NO light rays, NO explosion effects
 - Optionally include a smartphone or device frame showing a live stream or social media interface as part of the icon cluster
 - NO photorealism, NO photography, NO camera effects — pure bold cartoon illustration
 
@@ -247,12 +248,12 @@ ${description ? `Description: "${description.slice(0, 300)}..."` : ''}
 
 INSTRUCTIONS:
 Analyze the video title and create a side-by-side thumbnail:
-1. ONE HALF — HEADLINE: Extract a short, punchy headline from the video title (2-4 words max). Display it in MASSIVE stacked 3D extruded block text filling the entire half. Use mixed colors (yellow for emphasis words, white for others) with black outlines and colored drop shadows. The text should feel like it's bursting off the screen.
-2. OTHER HALF — ICON CLUSTER: Create a dense, energetic cluster of detailed cartoon icons and illustrations that visually represent the video's topic. Draw them with thick outlines, cel-shading, glossy highlights, and depth — not simple flat icons. Include 4-8 varied, richly illustrated objects.
-3. BACKGROUND: Use dramatically contrasting colors for each half — one bold/saturated, one lighter/warmer — to create a strong visual split.
-4. MICRO-DETAILS: Scatter floating sparkles, arrows, hearts, stars, and small engagement icons around the icon cluster to fill space and add energy.
+1. ONE HALF — HEADLINE: Extract a short, punchy headline from the video title (2-4 words max). Display it in MASSIVE stacked 3D extruded block text filling the entire half. Use mixed colors (yellow for emphasis words, white for others) with black outlines and colored drop shadows. The text should be bold and highly legible.
+2. OTHER HALF — ICON CLUSTER: Create a well-arranged cluster of detailed cartoon icons and illustrations that visually represent the video's topic. Draw them with thick outlines, cel-shading, glossy highlights, and depth — not simple flat icons. Include 4-8 varied, richly illustrated objects.
+3. BACKGROUND: Use dramatically contrasting solid colors or simple gradients for each half — one bold/saturated, one lighter/warmer. Keep backgrounds clean with no radial bursts or light rays.
+4. ACCENTS: Add small sparkles, arrows, hearts, or stars sparingly around the icon cluster to fill gaps — do not overload with floating details.
 5. If the video topic involves social media, streaming, or content creation, include platform branding elements (badges, logos, chat bubbles) naturally within the icon cluster.
-6. The overall composition should feel like a magazine cover or bold social media graphic — impossible to scroll past.
+6. The overall composition should feel like a polished magazine cover or bold social media graphic — clean, confident, and eye-catching.
 
-The thumbnail should feel explosive and energetic — a bold two-panel visual with massive text impact on one side and a rich tapestry of themed cartoon icons on the other.`
+The thumbnail should feel bold and confident — a clean two-panel visual with massive text impact on one side and a rich cluster of themed cartoon icons on the other.`
 }

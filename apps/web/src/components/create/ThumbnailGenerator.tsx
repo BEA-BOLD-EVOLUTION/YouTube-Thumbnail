@@ -107,8 +107,9 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   const isLoading = generateMutation.isPending || quickGenerateMutation.isPending || youtubeGenerateMutation.isPending || tiktokGenerateMutation.isPending
   const error = generateMutation.error || quickGenerateMutation.error || youtubeGenerateMutation.error || tiktokGenerateMutation.error
 
-  const handleEnhancePrompt = () => {
-    if (!prompt.trim()) return
+  const handleEnhancePrompt = (customText?: string) => {
+    const text = customText || prompt
+    if (!text.trim()) return
     setIsEnhancing(true)
     const referenceImages =
       uploadedImages.length > 0
@@ -117,7 +118,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
             mimeType: img.file.type,
           }))
         : undefined
-    suggestPromptMutation.mutate({ videoIntent: prompt, referenceImages })
+    suggestPromptMutation.mutate({ videoIntent: text, referenceImages })
   }
 
   const handleApplyTemplate = (generatedPrompt: string) => {
@@ -138,7 +139,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
 
     if (mode === 'video') {
       const templateType = videoTemplate === 'none' ? 'none' as const : videoTemplate
-      const customPrompt = videoTemplate === 'none' ? videoCustomPrompt.trim() || undefined : undefined
+      const customPrompt = videoTemplate === 'none' ? (enhancedPrompt || videoCustomPrompt).trim() || undefined : undefined
       if (isTikTokUrl(videoUrl)) {
         tiktokGenerateMutation.mutate({ tiktokUrl: videoUrl, aspectRatio, style, templateType, customPrompt })
       } else {
@@ -396,14 +397,27 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
               <Textarea
                 id="video-custom-prompt"
                 value={videoCustomPrompt}
-                onChange={(e) => setVideoCustomPrompt(e.target.value)}
+                onChange={(e) => { setVideoCustomPrompt(e.target.value); setEnhancedPrompt('') }}
                 placeholder="e.g., A dramatic face reaction with bold text, bright colors, high contrast..."
                 className="min-h-20 resize-none"
                 disabled={isLoading}
               />
-              <p className="text-xs text-muted-foreground">
-                Your prompt will be combined with the video's title for context
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground flex-1">
+                  Your prompt will be combined with the video's title for context
+                </p>
+                <Button variant="outline" size="sm" onClick={() => handleEnhancePrompt(videoCustomPrompt)} disabled={!videoCustomPrompt.trim() || isEnhancing || isLoading}>
+                  {isEnhancing ? '✨ Enhancing...' : '✨ Enhance'}
+                </Button>
+              </div>
+              {enhancedPrompt && (
+                <div className="space-y-1 mt-2">
+                  <span className="text-xs font-medium text-green-500">Enhanced Prompt</span>
+                  <div className="p-2 bg-muted/50 border border-green-500/30 rounded-lg">
+                    <p className="text-xs whitespace-pre-wrap">{enhancedPrompt}</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
