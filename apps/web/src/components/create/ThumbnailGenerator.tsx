@@ -297,7 +297,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
               disabled={isLoading}
             />
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={handleEnhancePrompt} disabled={!prompt.trim() || isEnhancing || isLoading}>
+              <Button variant="outline" size="sm" onClick={() => handleEnhancePrompt()} disabled={!prompt.trim() || isEnhancing || isLoading}>
                 {isEnhancing ? '✨ Enhancing...' : '✨ Enhance Prompt'}
               </Button>
             </div>
@@ -471,7 +471,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
                   disabled={isLoading}
                 />
               )}
-              <Button variant="outline" size="sm" onClick={handleEnhancePrompt} disabled={!prompt.trim() || isEnhancing || isLoading}>
+              <Button variant="outline" size="sm" onClick={() => handleEnhancePrompt()} disabled={!prompt.trim() || isEnhancing || isLoading}>
                 {isEnhancing ? '✨ Enhancing...' : '✨ Enhance'}
               </Button>
             </div>
