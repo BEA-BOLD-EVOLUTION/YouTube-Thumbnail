@@ -293,7 +293,7 @@ export const imageRouter = router({
     .input(
       z.object({
         youtubeUrl: z.string().url(),
-        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context', 'none']).optional().default('technical-guide'),
+        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context', 'bold-headline', 'none']).optional().default('technical-guide'),
         customPrompt: z.string().max(2000).optional(),
         aspectRatio: z
           .enum(['16:9', '9:16', '1:1', '4:3', '3:4'])
@@ -415,7 +415,7 @@ export const imageRouter = router({
     .input(
       z.object({
         tiktokUrl: z.string().url(),
-        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context', 'none']).optional().default('technical-guide'),
+        templateType: z.enum(['technical-guide', 'do-this-not-that', 'subject-context', 'bold-headline', 'none']).optional().default('technical-guide'),
         customPrompt: z.string().max(2000).optional(),
         aspectRatio: z
           .enum(['16:9', '9:16', '1:1', '4:3', '3:4'])

@@ -11,7 +11,7 @@ interface YouTubeMetadata {
   thumbnailUrl?: string
 }
 
-type TemplateType = 'technical-guide' | 'do-this-not-that' | 'subject-context'
+type TemplateType = 'technical-guide' | 'do-this-not-that' | 'subject-context' | 'bold-headline'
 
 interface TemplateAnalysis {
   templateType: TemplateType
@@ -114,6 +114,8 @@ export function createThumbnailPromptFromMetadata(
     return createTechnicalGuidePrompt(title, description)
   } else if (templateType === 'do-this-not-that') {
     return createDoThisNotThatPrompt(title, description)
+  } else if (templateType === 'bold-headline') {
+    return createBoldHeadlinePrompt(title, description)
   } else {
     return createSubjectContextPrompt(title, description)
   }
@@ -219,4 +221,38 @@ Create a professional informational thumbnail:
 6. Every element should have depth and dimensionality — glossy sheen, highlights, subtle shadows
 
 The thumbnail should feel energetic and premium — like a candy-colored comic book cover bursting with light and visual density. Impossible to scroll past.`
+}
+
+/**
+ * Create Bold Headline + Icons style prompt (side-by-side headline and icon cluster)
+ */
+function createBoldHeadlinePrompt(title: string, description: string): string {
+  return `Create a YouTube thumbnail in the "Bold Headline + Icons" side-by-side style:
+
+STYLE REQUIREMENTS:
+- Bold, high-contrast 2D cartoon illustration with thick clean outlines and cel-shading
+- SIDE-BY-SIDE split composition: one half is dominated by MASSIVE stacked headline text, the other half is a dense cluster of themed cartoon icons and illustrations
+- The headline text should be in MASSIVE, bold 3D extruded block text with black outlines, colored drop shadows, and mixed yellow/white coloring — stacked vertically to fill the entire half
+- Some words in the headline should use a different highlight color (e.g., one word in italic or a contrasting color) for emphasis
+- The icon cluster side features richly detailed cartoon illustrations related to the video topic — drawn with thick outlines, cel-shading, glossy highlights, and depth
+- Floating micro-details scattered throughout the icon side: sparkles, arrows, hearts, stars, coins, engagement emoji icons, growth arrows
+- Platform branding elements (e.g., TikTok LIVE badge, streaming UI elements) can be integrated into the icon cluster if relevant to the topic
+- The two halves should have dramatically different background colors for strong visual contrast (e.g., deep purple vs warm cream, bold red vs light blue)
+- Optionally include a smartphone or device frame showing a live stream or social media interface as part of the icon cluster
+- NO photorealism, NO photography, NO camera effects — pure bold cartoon illustration
+
+VIDEO CONTEXT:
+Title: "${title}"
+${description ? `Description: "${description.slice(0, 300)}..."` : ''}
+
+INSTRUCTIONS:
+Analyze the video title and create a side-by-side thumbnail:
+1. ONE HALF — HEADLINE: Extract a short, punchy headline from the video title (2-4 words max). Display it in MASSIVE stacked 3D extruded block text filling the entire half. Use mixed colors (yellow for emphasis words, white for others) with black outlines and colored drop shadows. The text should feel like it's bursting off the screen.
+2. OTHER HALF — ICON CLUSTER: Create a dense, energetic cluster of detailed cartoon icons and illustrations that visually represent the video's topic. Draw them with thick outlines, cel-shading, glossy highlights, and depth — not simple flat icons. Include 4-8 varied, richly illustrated objects.
+3. BACKGROUND: Use dramatically contrasting colors for each half — one bold/saturated, one lighter/warmer — to create a strong visual split.
+4. MICRO-DETAILS: Scatter floating sparkles, arrows, hearts, stars, and small engagement icons around the icon cluster to fill space and add energy.
+5. If the video topic involves social media, streaming, or content creation, include platform branding elements (badges, logos, chat bubbles) naturally within the icon cluster.
+6. The overall composition should feel like a magazine cover or bold social media graphic — impossible to scroll past.
+
+The thumbnail should feel explosive and energetic — a bold two-panel visual with massive text impact on one side and a rich tapestry of themed cartoon icons on the other.`
 }

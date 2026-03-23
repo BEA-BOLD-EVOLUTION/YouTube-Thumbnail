@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
-export type TemplateId = 'subject-context' | 'technical-guide' | 'do-this-not-that'
+export type TemplateId = 'subject-context' | 'technical-guide' | 'do-this-not-that' | 'bold-headline'
 
 interface TemplateField {
   key: string
@@ -65,6 +65,23 @@ export const PROMPT_TEMPLATES: Template[] = [
       { key: 'vibrantColor', label: 'Vibrant Color (Right)', placeholder: 'e.g., Emerald Green', type: 'text' },
     ],
     generate: (values) => `A bold, high-contrast YouTube thumbnail in a 2D cartoon illustration style with thick clean outlines and a vertical split-screen design, with the same rich detail level as a Technical Guide thumbnail. At the TOP of the image, display the main headline in MASSIVE bold 3D block text with black outlines and drop shadows — this is the largest, most prominent text. At the BOTTOM, smaller but still bold text reads 'DO THIS; NOT THAT' in yellow and white as a category label. On the left side (the 'Not That' side), use a ${values.dullColor} background with DETAILED, richly drawn cartoon illustrations of ${values.badThing} — fully rendered cartoon objects with depth, thick outlines, and visual personality, plus a large red circle-with-X icon. On the right side (the 'Do This' side), use a ${values.vibrantColor} background with DETAILED, richly drawn cartoon illustrations of ${values.goodThing} — fully rendered cartoon objects looking polished and professional, plus a large green circle-with-checkmark icon. Both sides should have richly illustrated cartoon graphics with small decorative details (sparkles, arrows, emojis). The video title headline at top must be significantly larger than the 'DO THIS; NOT THAT' text at bottom. NO photorealism, NO photography — pure bold cartoon illustration.`,
+  },
+  {
+    id: 'bold-headline',
+    name: 'Bold Headline + Icons',
+    icon: '🔥',
+    description: 'Side-by-side layout with massive headline text on one side and a cluster of themed cartoon icons on the other',
+    fields: [
+      { key: 'headline', label: 'Headline Text', placeholder: 'e.g., MASTER STORYTELLING', type: 'text' },
+      { key: 'iconCluster', label: 'Icon Cluster Theme', placeholder: 'e.g., gaming controllers, retro consoles, growth arrows, engagement hearts', type: 'textarea' },
+      { key: 'platformBranding', label: 'Platform Branding (optional)', placeholder: 'e.g., TikTok LIVE badge, YouTube logo, Twitch overlay', type: 'text' },
+      { key: 'bgColors', label: 'Background Colors', placeholder: 'e.g., deep purple on the left, warm cream on the right', type: 'text' },
+    ],
+    generate: (values) => {
+      const platform = values.platformBranding ? ` Include a '${values.platformBranding}' badge or logo element integrated naturally into the icon cluster side.` : ''
+      const bgColors = values.bgColors || 'bold saturated color on the text side, lighter contrasting tone on the icon side'
+      return `A bold, high-contrast YouTube thumbnail in a 2D cartoon illustration style with thick clean outlines. The layout is a dramatic SIDE-BY-SIDE split composition. On ONE side, display '${values.headline}' in MASSIVE, stacked, bold 3D extruded block text with black outlines, colored drop shadows, and mixed yellow/white coloring — the text should dominate that entire half and feel like it's bursting off the screen. On the OTHER side, create a dense, energetic cluster of detailed cartoon icons and illustrations related to '${values.iconCluster}' — richly drawn with thick outlines, cel-shading, glossy highlights, and depth. Scatter floating micro-details (sparkles, arrows, hearts, stars, coins, emoji-style engagement icons) around the icon cluster to fill space and add energy.${platform} Use ${bgColors} for the background split — the color contrast between halves should be dramatic. The overall composition should feel like a magazine cover or bold social media graphic — impossible to scroll past, with explosive visual density. NO photorealism, NO photography — pure bold cartoon illustration.`
+    },
   },
 ]
 

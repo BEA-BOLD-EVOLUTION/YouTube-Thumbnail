@@ -45,7 +45,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
   const [mode, setMode] = useState<'prompt' | 'intent' | 'reference' | 'video'>('prompt')
   const [videoUrl, setVideoUrl] = useState('')
-  const [videoTemplate, setVideoTemplate] = useState<'technical-guide' | 'do-this-not-that' | 'none'>('none')
+  const [videoTemplate, setVideoTemplate] = useState<'technical-guide' | 'do-this-not-that' | 'bold-headline' | 'none'>('none')
   const [videoCustomPrompt, setVideoCustomPrompt] = useState('')
   const [uploadedImages, setUploadedImages] = useState<{ dataUrl: string; file: File }[]>([])
   const [isEnhancing, setIsEnhancing] = useState(false)
@@ -318,7 +318,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
         <div className="space-y-4">
           <div className="space-y-2">
             <span className="text-sm font-medium">1. Template Style (optional)</span>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={() => setVideoTemplate('none')}
@@ -370,6 +370,23 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
                 </div>
                 <p className="text-xs text-muted-foreground">Split-screen comparison style</p>
               </button>
+              <button
+                type="button"
+                onClick={() => setVideoTemplate('bold-headline')}
+                disabled={isLoading}
+                className={cn(
+                  'p-3 rounded-lg border-2 text-left transition-all',
+                  videoTemplate === 'bold-headline'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-muted hover:border-primary/50'
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">🔥</span>
+                  <span className="font-semibold text-sm">Bold Headline</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Headline + icon cluster style</p>
+              </button>
             </div>
           </div>
 
@@ -403,7 +420,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
             <p className="text-xs text-muted-foreground">
               {videoTemplate === 'none'
                 ? "Supports YouTube and TikTok links — we'll use the video's title as context for your prompt"
-                : `Supports YouTube and TikTok links — we'll analyze the video and create a ${videoTemplate === 'technical-guide' ? 'Technical Guide' : 'Do This; Not That'} style thumbnail`}
+                : `Supports YouTube and TikTok links — we'll analyze the video and create a ${videoTemplate === 'technical-guide' ? 'Technical Guide' : videoTemplate === 'bold-headline' ? 'Bold Headline + Icons' : 'Do This; Not That'} style thumbnail`}
             </p>
           </div>
         </div>
