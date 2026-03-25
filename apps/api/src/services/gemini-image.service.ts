@@ -116,6 +116,7 @@ export const GEMINI_IMAGE_MODELS = {
 
 export type GeminiImageModel = keyof typeof GEMINI_IMAGE_MODELS
 const DEFAULT_MODEL: GeminiImageModel = 'gemini-2.5-flash-image'
+const TEXT_MODEL = 'gemini-2.5-flash'
 
 // =============================================================================
 // Types
@@ -208,24 +209,42 @@ const STYLE_PROMPTS: Record<string, string> = {
 // Intelligent Prompt Enhancement (Based on Official Gemini Documentation)
 // =============================================================================
 
+/** Style-aware openers used by the local fallback prompt enhancement. */
+const STYLE_FALLBACK_OPENERS: Record<string, { opener: string; closer: string }> = {
+  'photorealistic': {
+    opener: 'A photorealistic, high-resolution photograph of',
+    closer: 'Captured with professional camera equipment, emphasizing sharp detail and rich textures.',
+  },
+  'cinematic': {
+    opener: 'A cinematic still frame depicting',
+    closer: 'Shot with anamorphic lenses featuring dramatic shadows, rich color grading, and film-like grain.',
+  },
+  'anime': {
+    opener: 'A vibrant anime-style illustration of',
+    closer: 'Features clean bold outlines, expressive character design, saturated harmonious colors with soft cel-shading.',
+  },
+  'illustration': {
+    opener: 'A bold, high-energy 2D cartoon illustration of',
+    closer: 'Features thick clean outlines, cel-shading, hyper-saturated candy-colored palette with neon accents, glossy highlights, and 3D extruded text with drop shadows.',
+  },
+  'concept-art': {
+    opener: 'A detailed concept art piece depicting',
+    closer: 'Painted with bold, confident brushstrokes featuring atmospheric perspective and dramatic lighting.',
+  },
+}
+
 /**
  * Transforms poorly-worded prompts into professional Nano Banana prompts.
- * Following official Gemini best practice: "Describe the scene, don't just list keywords."
- * 
- * Official Template for Photorealistic Scenes:
- * "A photorealistic [shot type] of [subject], [action or expression], set in
- * [environment]. The scene is illuminated by [lighting description], creating
- * a [mood] atmosphere. Captured with a [camera/lens details], emphasizing
- * [key textures and details]. The image should be in a [aspect ratio] format."
- * 
- * @see https://ai.google.dev/gemini-api/docs/image-generation#prompting-guide
+ * Respects the selected style — never defaults to photorealistic when another style is active.
  */
-function intelligentPromptEnhancement(rawPrompt: string): {
+function intelligentPromptEnhancement(rawPrompt: string, style?: string): {
   isKeywordList: boolean
-  hasPhotographyTerms: boolean
+  hasStyleTerms: boolean
   enhanced: string
 } {
   const prompt = rawPrompt.trim()
+  const effectiveStyle = style || 'photorealistic'
+  const styleFallback = STYLE_FALLBACK_OPENERS[effectiveStyle] || STYLE_FALLBACK_OPENERS['photorealistic']
   
   // Detect keyword lists (comma-separated, short phrases)
   const hasCommas = prompt.includes(',')
@@ -233,47 +252,41 @@ function intelligentPromptEnhancement(rawPrompt: string): {
   const avgWordLength = words.reduce((sum, w) => sum + w.length, 0) / words.length
   const isKeywordList = hasCommas && avgWordLength < 8 && words.length > 3
   
-  // Detect if already has photography terms (per official guidance)
-  const photographyTerms = [
+  // Detect if already has style-related terms (photography or illustration terms)
+  const styleTerms = [
     'shot', 'lens', 'lighting', 'camera', 'focus', 'bokeh', 'depth of field',
     'exposure', 'composition', 'frame', 'angle', 'perspective', 'photograph',
     'illuminated', 'captured', 'cinematic', 'wide-angle', 'macro', 'portrait',
-    'close-up', 'studio-lit', 'softbox', 'natural light', 'golden hour'
+    'close-up', 'studio-lit', 'softbox', 'natural light', 'golden hour',
+    'illustration', 'cartoon', 'cel-shading', 'outlines', 'anime', 'concept art',
+    'painted', 'brushstrokes', 'drawing',
   ]
-  const hasPhotographyTerms = photographyTerms.some(term => 
+  const hasStyleTerms = styleTerms.some(term => 
     prompt.toLowerCase().includes(term)
   )
   
   if (isKeywordList) {
-    // Official Guidance: "Describe the scene, don't just list keywords"
-    // Transform: "cat, sunset, beach" → Narrative description
     const keywords = prompt.split(',').map(k => k.trim()).filter(k => k)
     
-    // Parse keywords into structured elements
     const subject = keywords[0] || 'subject'
     const remainingKeywords = keywords.slice(1)
     
-    // Identify environment/setting keywords
     const environmentKeywords = ['beach', 'mountain', 'forest', 'city', 'studio', 'room', 'outdoor', 'indoor']
     const environment = remainingKeywords.find(k => 
       environmentKeywords.some(e => k.toLowerCase().includes(e))
-    ) || 'natural setting'
+    ) || 'a dynamic setting'
     
-    // Identify lighting/mood keywords
-    const lightingKeywords = ['sunset', 'sunrise', 'dramatic', 'soft', 'moody', 'bright', 'dark']
-    const lighting = remainingKeywords.find(k => 
-      lightingKeywords.some(l => k.toLowerCase().includes(l))
-    ) || 'natural lighting'
+    const moodKeywords = ['sunset', 'sunrise', 'dramatic', 'soft', 'moody', 'bright', 'dark', 'vibrant', 'bold']
+    const mood = remainingKeywords.find(k => 
+      moodKeywords.some(m => k.toLowerCase().includes(m))
+    ) || 'compelling'
     
-    // Build using official template structure
-    let narrative = `A photorealistic, high-resolution photograph of ${subject}, `
-    narrative += `set in ${environment}. `
-    narrative += `The scene is illuminated by ${lighting}, creating a compelling atmosphere. `
-    narrative += `Captured with professional camera equipment, emphasizing sharp detail and rich textures. `
+    let narrative = `${styleFallback.opener} ${subject}, `
+    narrative += `set in ${environment}, with a ${mood} atmosphere. `
+    narrative += `${styleFallback.closer} `
     
-    // Add remaining descriptors as characteristics
     const otherDescriptors = remainingKeywords.filter(k => 
-      k !== environment && k !== lighting
+      k !== environment && k !== mood
     )
     if (otherDescriptors.length > 0) {
       narrative += `Key characteristics include: ${otherDescriptors.join(', ')}. `
@@ -281,31 +294,26 @@ function intelligentPromptEnhancement(rawPrompt: string): {
     
     return {
       isKeywordList: true,
-      hasPhotographyTerms: false,
+      hasStyleTerms: false,
       enhanced: narrative
     }
   }
   
-  if (!hasPhotographyTerms && prompt.length < 100) {
-    // Official Guidance: Add photography terms for realistic images
-    // Template: Mention camera angles, lens types, lighting
-    let enhanced = `A photorealistic, high-resolution photograph of ${prompt.toLowerCase()}. `
-    enhanced += 'The scene is captured with professional studio lighting, '
-    enhanced += 'featuring sharp focus and natural depth of field. '
-    enhanced += 'The composition emphasizes the subject with clean, professional framing '
-    enhanced += 'and accurate color reproduction.'
+  if (!hasStyleTerms && prompt.length < 100) {
+    let enhanced = `${styleFallback.opener} ${prompt.toLowerCase()}. `
+    enhanced += `${styleFallback.closer}`
     
     return {
       isKeywordList: false,
-      hasPhotographyTerms: false,
+      hasStyleTerms: false,
       enhanced
     }
   }
   
-  // Already well-formed with photography terms - return as is
+  // Already well-formed with style terms - return as is
   return {
     isKeywordList: false,
-    hasPhotographyTerms: true,
+    hasStyleTerms: true,
     enhanced: prompt
   }
 }
@@ -340,7 +348,7 @@ function enhancePromptForImageGeneration(
   }
 
   // Step 1: Intelligent enhancement (transform poor prompts per official guidance)
-  const { enhanced: smartPrompt } = intelligentPromptEnhancement(prompt)
+  const { enhanced: smartPrompt } = intelligentPromptEnhancement(prompt, style)
   
   let enhanced = ''
   
@@ -382,7 +390,7 @@ function buildReferencePrompt(
   // Following official Gemini templates for image editing/combining
   
   // Step 1: Enhance the user's prompt if it's poorly worded
-  const { enhanced: smartUserPrompt, isKeywordList } = intelligentPromptEnhancement(userPrompt)
+  const { enhanced: smartUserPrompt, isKeywordList } = intelligentPromptEnhancement(userPrompt, style)
   
   // Step 2: Provide guidance if prompt is too vague
   let clarifiedPrompt = smartUserPrompt
@@ -555,10 +563,10 @@ export async function generateStartingImage(
     const enhancedPrompt = hasReferences
       ? buildReferencePrompt(params.prompt, params.style, referenceCount, params.aspectRatio)
       : (() => {
-          const analysis = intelligentPromptEnhancement(params.prompt)
+          const analysis = intelligentPromptEnhancement(params.prompt, params.style)
           rawPromptAnalysis = {
             wasKeywordList: analysis.isKeywordList,
-            hadPhotographyTerms: analysis.hasPhotographyTerms,
+            hadPhotographyTerms: analysis.hasStyleTerms,
             wasEnhanced: analysis.enhanced !== params.prompt
           }
           return enhancePromptForImageGeneration(params.prompt, params.style, params.aspectRatio, false, params.skipStylePrefix)
@@ -751,11 +759,88 @@ export async function generateStartingImage(
   }
 }
 
+// =============================================================================
+// Style-Aware Enhance Prompt Builder
+// =============================================================================
+
+const STYLE_ENHANCE_INSTRUCTIONS: Record<string, { description: string; template: string; rules: string }> = {
+  'photorealistic': {
+    description: 'a photorealistic photograph',
+    template: `"A photorealistic [shot type] of [subject], [action or expression], set in [environment]. The scene is illuminated by [lighting description], creating a [mood] atmosphere. Captured with a [camera/lens details], emphasizing [key textures and details]."`,
+    rules: `- Use photographic terms: camera angle, lens type, lighting setup, depth of field, bokeh
+- Describe realistic textures, materials, and natural lighting
+- Write like a film set description: specific, tangible, physical`,
+  },
+  'cinematic': {
+    description: 'a cinematic still frame from a high-budget film',
+    template: `"A cinematic [shot type] of [subject], [action or expression], set in [environment]. The scene features dramatic, moody lighting with [lighting details]. Shot with anamorphic lenses creating [visual characteristics]. The color grading is [mood/tone] with [color details]."`,
+    rules: `- Use cinematic terms: anamorphic, color grading, film grain, dramatic shadows, lens flare
+- Emphasize mood, atmosphere, and storytelling through visual composition
+- Write like a screenplay scene description`,
+  },
+  'anime': {
+    description: 'a vibrant anime-style illustration',
+    template: `"A vibrant anime-style illustration of [subject], [action or expression], in [environment]. The art features [line work details] with [color palette]. The mood is [atmosphere] with [background details]."`,
+    rules: `- Use anime/manga art terms: cel-shading, clean outlines, expressive eyes, dynamic poses
+- NO camera terms, NO lens types, NO bokeh, NO depth of field, NO "photograph"
+- Describe art style: line weight, color palette, shading technique, background style
+- Reference anime aesthetic: saturated colors, dramatic expressions, atmospheric effects`,
+  },
+  'illustration': {
+    description: 'a bold, high-energy 2D cartoon illustration',
+    template: `"A bold, high-energy 2D cartoon illustration of [subject], [action or visual concept], with [style details]. The design features [text/headline treatment]. The background is [background style]. Scattered [decorative details]."`,
+    rules: `- Use illustration terms: thick outlines, cel-shading, flat color fills, neon accents, 3D extruded text
+- NO camera terms, NO lens types, NO "photograph", NO "photorealistic", NO photography language
+- Describe: bold outlines, glossy highlights, glow effects, radial light bursts, floating sparkles
+- Text should be described as MASSIVE 3D block letters with drop shadows and glowing edges
+- The feel should be EXPLOSIVE and PREMIUM — like a top-tier YouTube thumbnail`,
+  },
+  'concept-art': {
+    description: 'a detailed concept art piece for film or game production',
+    template: `"A detailed concept art piece depicting [subject], [action or scene], in [environment]. Painted with [brush/technique details], featuring [lighting and atmosphere]. The composition emphasizes [focal point and mood]."`,
+    rules: `- Use concept art terms: painterly brushstrokes, atmospheric perspective, environmental storytelling
+- NO photography language — this is a painting, not a photograph
+- Describe painted qualities: brush confidence, color mood, composition drama
+- Emphasize world-building and visual narrative`,
+  },
+}
+
+function buildStyleAwareEnhancePrompt(videoIntent: string, style: string, aspectRatio?: string): string {
+  const styleInfo = STYLE_ENHANCE_INSTRUCTIONS[style] || STYLE_ENHANCE_INSTRUCTIONS['photorealistic']
+
+  let prompt = `You are an expert at creating image generation prompts optimized for Gemini's native image generation.
+
+The user wants to create ${styleInfo.description}.
+
+Their concept: "${videoIntent}"
+
+YOUR TASK: Rewrite this into a detailed, NARRATIVE image prompt that will produce a HIGH-QUALITY ${styleInfo.description}.
+
+STYLE-SPECIFIC TEMPLATE:
+${styleInfo.template}
+
+STYLE RULES:
+${styleInfo.rules}
+
+GENERAL RULES:
+1. DESCRIBE THE SCENE as a narrative paragraph — NOT a list of keywords
+2. BE HYPER-SPECIFIC with visual details: colors, materials, textures, spatial relationships
+3. Match the art style EXACTLY — do not default to photorealistic unless that is the selected style
+4. Use SEMANTIC POSITIVE descriptions — describe what you WANT, not what you don't want`
+
+  if (aspectRatio) {
+    prompt += `\n5. The output should be composed for a ${aspectRatio} aspect ratio`
+  }
+
+  prompt += `\n\nRespond with ONLY the enhanced image prompt, no explanations.`
+  return prompt
+}
+
 export async function suggestImagePrompt(
   videoIntent: string,
   userApiKey?: string | null,
   referenceImages?: Array<{ base64: string; mimeType: string }>,
-  options?: { preserveStyleInstructions?: boolean }
+  options?: { preserveStyleInstructions?: boolean; style?: string; aspectRatio?: string }
 ): Promise<{ success: boolean; prompt?: string; error?: string; usedFallback?: boolean }> {
   // Always prepare a local fallback so the UX stays functional even if:
   // - the platform key is missing during deploy/restart
@@ -763,11 +848,12 @@ export async function suggestImagePrompt(
   // - the SDK errors in unexpected ways
   const hasImages = referenceImages && referenceImages.length > 0
   const imageCount = referenceImages?.length || 0
+  const effectiveStyle = options?.style || 'cinematic'
   const fallbackPrompt = hasImages
-    ? buildReferencePrompt(videoIntent, 'cinematic', imageCount)
+    ? buildReferencePrompt(videoIntent, effectiveStyle, imageCount)
     : options?.preserveStyleInstructions
       ? videoIntent  // YouTube templates already contain style; don't rewrite
-      : enhancePromptForImageGeneration(videoIntent, 'cinematic')
+      : enhancePromptForImageGeneration(videoIntent, effectiveStyle)
 
   const { client: genai, usedOwnKey } = getClient(userApiKey)
 
@@ -862,29 +948,12 @@ IMPORTANT:
 - The final image should feel EXPLOSIVE and PREMIUM — like a top-tier YouTube thumbnail that demands clicks
 
 Respond with ONLY the enhanced image prompt, no explanations.`
-      : `You are an expert at creating starting images for AI video generation.
-
-Given this video intent/concept: "${videoIntent}"
-
-Generate a detailed, NARRATIVE image prompt following Gemini's official best practices.
-
-GEMINI PROMPTING RULES:
-1. DESCRIBE THE SCENE as a narrative paragraph - NOT keywords
-2. BE HYPER-SPECIFIC with details about subject, environment, lighting
-3. CONTROL THE CAMERA - mention shot type, lens, camera angle
-4. Include: subject's pose/expression, environment details, lighting description, mood/atmosphere
-
-TEMPLATE FOR PHOTOREALISTIC:
-"A photorealistic [shot type] of [subject], [action or expression], set in [environment]. The scene is illuminated by [lighting description], creating a [mood] atmosphere. Captured with a [camera/lens details], emphasizing [key textures and details]."
-
-The prompt should read like a scene description from a screenplay.
-
-Respond with ONLY the image prompt, no explanations.`
+      : buildStyleAwareEnhancePrompt(videoIntent, effectiveStyle, options?.aspectRatio)
     
     contentParts.push({ text: promptText })
 
     const response = await genai.models.generateContent({
-      model: DEFAULT_MODEL,
+      model: TEXT_MODEL,
       contents: [{
         role: 'user',
         parts: contentParts,

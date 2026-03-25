@@ -118,7 +118,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
             mimeType: img.file.type,
           }))
         : undefined
-    suggestPromptMutation.mutate({ videoIntent: text, referenceImages })
+    suggestPromptMutation.mutate({ videoIntent: text, referenceImages, style, aspectRatio })
   }
 
   const handleApplyTemplate = (generatedPrompt: string) => {

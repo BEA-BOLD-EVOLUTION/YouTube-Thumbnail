@@ -168,13 +168,19 @@ export const imageRouter = router({
           .array(z.object({ base64: z.string(), mimeType: z.string() }))
           .max(14)
           .optional(),
+        style: z
+          .enum(['photorealistic', 'cinematic', 'anime', 'illustration', 'concept-art'])
+          .optional(),
+        aspectRatio: z
+          .enum(['16:9', '9:16', '1:1'])
+          .optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       console.log('suggestPrompt input:', input)
       const { userApiKey } = await getContext(ctx)
 
-      const result = await suggestImagePrompt(input.videoIntent, userApiKey, input.referenceImages)
+      const result = await suggestImagePrompt(input.videoIntent, userApiKey, input.referenceImages, { style: input.style, aspectRatio: input.aspectRatio })
 
       if (!result.usedFallback) {
         try {
