@@ -15,9 +15,29 @@ import { getTikTokMetadata, isTikTokUrl } from '../../services/tiktok.service'
 
 function decryptApiKey(encrypted: string | null): string | null {
   if (!encrypted) return null
+  // AES-256-GCM format (new)
+  if (encrypted.startsWith('aes:')) {
+    const { createDecipheriv } = require('crypto')
+    const keyStr = process.env.ENCRYPTION_KEY
+    if (!keyStr) return null
+    const key = Buffer.from(keyStr, 'hex')
+    const parts = encrypted.slice(4).split(':')
+    if (parts.length !== 3) return null
+    const [ivHex, tagHex, ctHex] = parts
+    const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivHex, 'hex'))
+    decipher.setAuthTag(Buffer.from(tagHex, 'hex'))
+    return decipher.update(Buffer.from(ctHex, 'hex')).toString('utf8') + decipher.final('utf8')
+  }
+  // Legacy base64 format
   if (!encrypted.startsWith('enc:')) return encrypted
   return Buffer.from(encrypted.slice(4), 'base64').toString('utf8')
 }
+
+// Allowed MIME types for reference images
+const referenceImageSchema = z.object({
+  base64: z.string().max(15_000_000), // ~11 MB decoded
+  mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+})
 
 async function getContext(ctx: { prisma: any; user?: { id: string } | null }) {
   const userRecord = ctx.user
@@ -65,11 +85,8 @@ export const imageRouter = router({
           .optional()
           .default('photorealistic'),
         negativePrompt: z.string().max(500).optional(),
-        referenceImage: z.object({ base64: z.string(), mimeType: z.string() }).optional(),
-        referenceImages: z
-          .array(z.object({ base64: z.string(), mimeType: z.string() }))
-          .max(14)
-          .optional(),
+        referenceImage: referenceImageSchema.optional(),
+        referenceImages: z.array(referenceImageSchema).max(14).optional(),
         model: z.enum(['gemini-2.5-flash-image', 'gemini-3-pro-image-preview']).optional(),
         enableThinking: z.boolean().optional(),
         outputResolution: z.enum(['standard', '2k', '4k']).optional(),
@@ -164,10 +181,7 @@ export const imageRouter = router({
     .input(
       z.object({
         videoIntent: z.string().min(1).max(1000),
-        referenceImages: z
-          .array(z.object({ base64: z.string(), mimeType: z.string() }))
-          .max(14)
-          .optional(),
+        referenceImages: z.array(referenceImageSchema).max(14).optional(),
         style: z
           .enum(['photorealistic', 'cinematic', 'anime', 'illustration', 'concept-art'])
           .optional(),

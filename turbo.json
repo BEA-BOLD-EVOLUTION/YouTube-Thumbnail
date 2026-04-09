@@ -16,7 +16,8 @@
     "AI_PRICING_JSON",
     "GOOGLE_GEMINI_API_KEY",
     "GOOGLE_GEMINI_API_KEYS",
-    "GOOGLE_GENERATIVE_AI_API_KEY"
+    "GOOGLE_GENERATIVE_AI_API_KEY",
+    "ENCRYPTION_KEY"
   ],
   "tasks": {
     "build": {

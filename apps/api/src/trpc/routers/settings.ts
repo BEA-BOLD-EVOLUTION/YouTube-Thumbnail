@@ -1,22 +1,66 @@
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
 import { z } from 'zod'
 import { router, protectedProcedure } from '../trpc'
 import { TRPCError } from '@trpc/server'
 
-function encryptApiKey(key: string): string {
-  const encoded = Buffer.from(key).toString('base64')
-  return `enc:${encoded}`
+const ALGORITHM = 'aes-256-gcm'
+const KEY_LENGTH = 32 // 256 bits = 32 bytes
+
+function getEncryptionKey(): Buffer | null {
+  const keyStr = process.env.ENCRYPTION_KEY
+  if (!keyStr) return null
+  const key = Buffer.from(keyStr, 'hex')
+  if (key.length !== KEY_LENGTH) {
+    console.warn('[settings] ENCRYPTION_KEY must be 64 hex chars (32 bytes). Encryption disabled.')
+    return null
+  }
+  return key
+}
+
+function encryptApiKey(plaintext: string): string {
+  const key = getEncryptionKey()
+  if (!key) {
+    // Fallback: legacy base64 encoding — warn once at startup if key missing
+    return `enc:${Buffer.from(plaintext).toString('base64')}`
+  }
+  const iv = randomBytes(16)
+  const cipher = createCipheriv(ALGORITHM, key, iv)
+  const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()])
+  const tag = cipher.getAuthTag()
+  return `aes:${iv.toString('hex')}:${tag.toString('hex')}:${ciphertext.toString('hex')}`
 }
 
 function decryptApiKey(encrypted: string): string {
-  if (!encrypted.startsWith('enc:')) return encrypted
-  return Buffer.from(encrypted.slice(4), 'base64').toString('utf8')
+  // AES-256-GCM format: aes:{iv}:{tag}:{ciphertext}
+  if (encrypted.startsWith('aes:')) {
+    const key = getEncryptionKey()
+    if (!key) throw new Error('ENCRYPTION_KEY not set — cannot decrypt stored API key')
+    const parts = encrypted.slice(4).split(':')
+    if (parts.length !== 3) throw new Error('Malformed encrypted key')
+    const [ivHex, tagHex, ctHex] = parts
+    const iv = Buffer.from(ivHex, 'hex')
+    const tag = Buffer.from(tagHex, 'hex')
+    const ciphertext = Buffer.from(ctHex, 'hex')
+    const decipher = createDecipheriv(ALGORITHM, key, iv)
+    decipher.setAuthTag(tag)
+    return decipher.update(ciphertext).toString('utf8') + decipher.final('utf8')
+  }
+  // Legacy format: enc:{base64}
+  if (encrypted.startsWith('enc:')) {
+    return Buffer.from(encrypted.slice(4), 'base64').toString('utf8')
+  }
+  return encrypted
 }
 
 function maskApiKey(key: string | null): string | null {
   if (!key) return null
-  const decrypted = key.startsWith('enc:') ? decryptApiKey(key) : key
-  if (decrypted.length < 8) return '****'
-  return `${decrypted.slice(0, 4)}...${decrypted.slice(-4)}`
+  try {
+    const decrypted = decryptApiKey(key)
+    if (decrypted.length < 8) return '****'
+    return `${decrypted.slice(0, 4)}...${decrypted.slice(-4)}`
+  } catch {
+    return '****'
+  }
 }
 
 const GEMINI_MODELS = {
@@ -62,13 +106,13 @@ export const settingsRouter = router({
   }),
 
   setGeminiApiKey: protectedProcedure
-    .input(z.object({ apiKey: z.string().min(1, 'API key is required') }))
+    .input(z.object({ apiKey: z.string().min(1, 'API key is required').max(200) }))
     .mutation(async ({ ctx, input }) => {
       try {
         const { GoogleGenAI } = await import('@google/genai')
         const testClient = new GoogleGenAI({ apiKey: input.apiKey })
         await testClient.models.list()
-      } catch (error: any) {
+      } catch {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Invalid API key. Please check your key and try again.',
