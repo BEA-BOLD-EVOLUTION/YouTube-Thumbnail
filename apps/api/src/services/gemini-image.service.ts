@@ -81,6 +81,29 @@ function cooldownPlatformKey(platformKeyIndex: number, ms: number) {
 }
 
 // =============================================================================
+// Timeout helper
+// - Gemini's SDK does not expose per-request timeouts, so a slow/stalled call
+//   will hold the HTTP connection and (on the platform key) eat into the
+//   hourly rate limit. Race the SDK promise against a timer and surface a
+//   consistent error when we give up.
+// =============================================================================
+
+const IMAGE_TIMEOUT_MS = Number(process.env.GEMINI_IMAGE_TIMEOUT_MS ?? '90000')
+const TEXT_TIMEOUT_MS = Number(process.env.GEMINI_TEXT_TIMEOUT_MS ?? '30000')
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`))
+    }, ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer)
+  }) as Promise<T>
+}
+
+// =============================================================================
 // Model Configuration
 // =============================================================================
 
@@ -619,12 +642,16 @@ export async function generateStartingImage(
     
     // Add Google Search grounding for Pro model (real-time data like weather, news, etc.)
     if (modelInfo.supportsSearchGrounding && params.enableSearchGrounding) {
-      const response = await genai.models.generateContent({
-        model,
-        contents: [{ role: 'user', parts: contentParts }],
-        config,
-        tools: [{ google_search: {} }]
-      } as any)
+      const response = await withTimeout(
+        genai.models.generateContent({
+          model,
+          contents: [{ role: 'user', parts: contentParts }],
+          config,
+          tools: [{ google_search: {} }]
+        } as any),
+        IMAGE_TIMEOUT_MS,
+        `Gemini image+search (${model})`
+      )
       
       const parts = response.candidates?.[0]?.content?.parts || []
       
@@ -661,11 +688,15 @@ export async function generateStartingImage(
       }
     }
     
-    const response = await genai.models.generateContent({
-      model,
-      contents: [{ role: 'user', parts: contentParts }],
-      config,
-    } as any)
+    const response = await withTimeout(
+      genai.models.generateContent({
+        model,
+        contents: [{ role: 'user', parts: contentParts }],
+        config,
+      } as any),
+      IMAGE_TIMEOUT_MS,
+      `Gemini image (${model})`
+    )
 
     const parts = response.candidates?.[0]?.content?.parts || []
     const finishReason = (response.candidates?.[0] as any)?.finishReason
@@ -738,9 +769,11 @@ export async function generateStartingImage(
     let errorMessage = error instanceof Error ? error.message : 'Unknown error during image generation'
 
     const normalized = errorMessage.toLowerCase()
-    
-    if (errorMessage.includes('API key')) {
-      errorMessage = usedOwnKey 
+
+    if (normalized.includes('timed out')) {
+      errorMessage = 'Image generation took too long and was cancelled. The model may be under load — please try again in a moment.'
+    } else if (errorMessage.includes('API key')) {
+      errorMessage = usedOwnKey
         ? 'Your API key appears to be invalid. Please check it in Settings.'
         : 'Platform API key error. Please try adding your own API key in Settings.'
     } else if (
@@ -973,13 +1006,17 @@ Respond with ONLY the enhanced image prompt, no explanations.`
     
     contentParts.push({ text: promptText })
 
-    const response = await genai.models.generateContent({
-      model: TEXT_MODEL,
-      contents: [{
-        role: 'user',
-        parts: contentParts,
-      }],
-    })
+    const response = await withTimeout(
+      genai.models.generateContent({
+        model: TEXT_MODEL,
+        contents: [{
+          role: 'user',
+          parts: contentParts,
+        }],
+      }),
+      TEXT_TIMEOUT_MS,
+      `Gemini text (${TEXT_MODEL})`
+    )
 
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text
 
@@ -1188,10 +1225,14 @@ Respond with ONLY the 14 numbered prompts. Each prompt must be a single paragrap
       { text: instruction },
     ]
 
-    const response = await genai.models.generateContent({
-      model,
-      contents: [{ role: 'user', parts: contentParts }],
-    } as any)
+    const response = await withTimeout(
+      genai.models.generateContent({
+        model,
+        contents: [{ role: 'user', parts: contentParts }],
+      } as any),
+      TEXT_TIMEOUT_MS,
+      `Gemini lens-prompt (${model})`
+    )
 
     const rawText = response.candidates?.[0]?.content?.parts?.map((p: any) => p.text).filter(Boolean).join('\n')?.trim()
     if (!rawText) {

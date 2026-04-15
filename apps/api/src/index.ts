@@ -7,16 +7,24 @@ import rateLimit from 'express-rate-limit'
 import { createExpressMiddleware } from '@trpc/server/adapters/express'
 import { appRouter } from './trpc/router'
 import { createContext } from './trpc/context'
+import { prisma } from './lib/prisma'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 4000
 const HOST = process.env.HOST || '0.0.0.0'
 
-// Environment validation
+// -----------------------------------------------------------------------------
+// Fail-fast environment validation.
+// Missing any of these leaves the service in a broken state where healthchecks
+// pass but every request dies on first DB/auth touch. Exit with code 1 so the
+// orchestrator (Railway/docker) surfaces the misconfiguration and restarts.
+// -----------------------------------------------------------------------------
 const requiredEnvVars = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_SERVICE_KEY']
 const missingVars = requiredEnvVars.filter((v) => !process.env[v])
 if (missingVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingVars.join(', '))
+  console.error('   The API cannot start without these. Set them and redeploy.')
+  process.exit(1)
 }
 
 console.log('🔧 Environment check:')
@@ -95,7 +103,36 @@ app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 app.get('/', (_, res) => res.json({ status: 'ok' }))
+
+// Liveness: the process is up. Cheap. Don't add DB/external checks here or
+// orchestrators will kill the container on every transient DB blip.
 app.get('/health', (_, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
+
+// Readiness: the process can actually serve requests. Railway/k8s should gate
+// traffic on this. Checks DB connectivity; returns 503 if unreachable.
+app.get('/health/ready', async (_req, res) => {
+  const checks: Record<string, { ok: boolean; latencyMs?: number; error?: string }> = {}
+  let allOk = true
+
+  const t0 = Date.now()
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    checks.database = { ok: true, latencyMs: Date.now() - t0 }
+  } catch (err) {
+    allOk = false
+    checks.database = {
+      ok: false,
+      latencyMs: Date.now() - t0,
+      error: err instanceof Error ? err.message : String(err),
+    }
+  }
+
+  res.status(allOk ? 200 : 503).json({
+    status: allOk ? 'ready' : 'degraded',
+    timestamp: new Date().toISOString(),
+    checks,
+  })
+})
 
 app.use(
   '/trpc',
@@ -106,9 +143,32 @@ app.use(
       if (process.env.NODE_ENV !== 'production') {
         console.error(`tRPC error on ${path}:`, error.message)
       }
+      // Forward unexpected (non-client) errors to Sentry so we see real bugs
+      // without the noise of e.g. BAD_REQUEST validation failures.
+      if (process.env.SENTRY_DSN && error.code === 'INTERNAL_SERVER_ERROR') {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const Sentry = require('@sentry/node')
+          Sentry.captureException(error, { tags: { trpcPath: path || 'unknown' } })
+        } catch {
+          /* Sentry missing — already warned at boot */
+        }
+      }
     },
   })
 )
+
+// Sentry's Express error handler must be registered AFTER all routes/middleware.
+// No-op when SENTRY_DSN isn't set.
+if (process.env.SENTRY_DSN) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Sentry = require('@sentry/node')
+    Sentry.setupExpressErrorHandler(app)
+  } catch {
+    /* already warned at boot */
+  }
+}
 
 const server = app.listen(PORT, HOST, () => {
   console.log(`🚀 API server running on ${HOST}:${PORT}`)

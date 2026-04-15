@@ -33,3 +33,27 @@ if (!env.GOOGLE_GENERATIVE_AI_API_KEY && env.GOOGLE_GEMINI_API_KEY) {
 if (!env.GOOGLE_GEMINI_API_KEY && env.GOOGLE_GENERATIVE_AI_API_KEY) {
   env.GOOGLE_GEMINI_API_KEY = env.GOOGLE_GENERATIVE_AI_API_KEY
 }
+
+// -----------------------------------------------------------------------------
+// Sentry (optional — only initialized when SENTRY_DSN is set).
+// Must run before other modules are imported so OpenTelemetry-based tracing
+// can instrument express/http/prisma. Since env.ts is imported first from
+// index.ts, initializing here satisfies that constraint.
+// -----------------------------------------------------------------------------
+if (env.SENTRY_DSN) {
+  try {
+    // Required lazily so the package is only loaded when actually configured.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Sentry = require('@sentry/node')
+    Sentry.init({
+      dsn: env.SENTRY_DSN,
+      environment: env.NODE_ENV || 'development',
+      release: env.RAILWAY_GIT_COMMIT_SHA || env.VERCEL_GIT_COMMIT_SHA,
+      tracesSampleRate: Number(env.SENTRY_TRACES_SAMPLE_RATE ?? '0.1'),
+      sendDefaultPii: false,
+    })
+    console.log('✅ Sentry initialized')
+  } catch (e) {
+    console.warn('[env] SENTRY_DSN set but @sentry/node failed to init:', (e as Error).message)
+  }
+}
