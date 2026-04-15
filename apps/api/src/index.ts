@@ -25,15 +25,28 @@ console.log('   SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ set' : '❌ miss
 console.log('   SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? '✅ set' : '❌ missing')
 console.log('   GOOGLE_GEMINI_API_KEY:', process.env.GOOGLE_GEMINI_API_KEY ? '✅ set' : '❌ missing (image generation)')
 console.log('   ENCRYPTION_KEY:', process.env.ENCRYPTION_KEY ? '✅ set' : '⚠️  missing (BYOK keys will use legacy encoding)')
+console.log('   ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS ? `✅ ${process.env.ALLOWED_ORIGINS}` : '(none — using defaults)')
 
 // Security headers
 app.use(helmet())
+
+// Extra origins provided at runtime via env var, e.g.
+//   ALLOWED_ORIGINS="https://my-app.vercel.app,https://staging.example.com"
+// This lets new frontend URLs be allowed without a code change/redeploy.
+const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
 
 const allowedOrigins: (string | RegExp)[] = [
   'http://localhost:3000',
   'http://localhost:3001',
   /https:\/\/youtube-thumbnail.*\.vercel\.app$/,
+  // Match Vercel preview deployments for this project: "*-thumbnail-web-*.vercel.app"
+  // (covers truncated hostnames like "…bnail-web.vercel.app" seen on mobile Safari).
+  /https:\/\/.*thumbnail-web[-.].*\.vercel\.app$/,
   'https://web-production-8640b.up.railway.app',
+  ...envAllowedOrigins,
 ]
 
 app.use(

@@ -1,0 +1,25 @@
+# Context is the repo root; exclude anything that would bloat the build
+# context or leak local state into the image.
+
+# Deps & build output — we install & build inside the image
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+
+# Local env & editor config
+**/.env
+**/.env.*
+!**/.env.example
+.vscode
+.idea
+
+# VCS / CI
+.git
+.github
+.gitignore
+
+# Logs & caches
+**/*.log
+**/.cache
+**/coverage
