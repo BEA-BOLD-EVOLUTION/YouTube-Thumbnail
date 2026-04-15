@@ -11,6 +11,13 @@ import { PromptTemplateDialog, TemplateButton } from './PromptTemplates'
 type AspectRatio = '16:9' | '9:16' | '1:1'
 type Style = 'photorealistic' | 'cinematic' | 'anime' | 'illustration' | 'concept-art'
 
+// Must match the API's `referenceImageSchema` in apps/api/src/trpc/routers/image.ts.
+type AllowedMime = 'image/png' | 'image/jpeg' | 'image/webp'
+const ALLOWED_MIMES: readonly AllowedMime[] = ['image/png', 'image/jpeg', 'image/webp']
+function isAllowedMime(m: string): m is AllowedMime {
+  return (ALLOWED_MIMES as readonly string[]).includes(m)
+}
+
 interface GeneratedImage {
   base64: string
   mimeType: string
@@ -47,7 +54,9 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
   const [videoUrl, setVideoUrl] = useState('')
   const [videoTemplate, setVideoTemplate] = useState<'technical-guide' | 'do-this-not-that' | 'bold-headline' | 'none'>('none')
   const [videoCustomPrompt, setVideoCustomPrompt] = useState('')
-  const [uploadedImages, setUploadedImages] = useState<{ dataUrl: string; file: File }[]>([])
+  const [uploadedImages, setUploadedImages] = useState<
+    { dataUrl: string; file: File; mimeType: AllowedMime }[]
+  >([])
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
   const MAX_REFERENCE_IMAGES = 4
@@ -115,7 +124,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       uploadedImages.length > 0
         ? uploadedImages.map((img) => ({
             base64: img.dataUrl.split(',')[1],
-            mimeType: img.file.type,
+            mimeType: img.mimeType,
           }))
         : undefined
     suggestPromptMutation.mutate({ videoIntent: text, referenceImages, style, aspectRatio })
@@ -152,7 +161,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     } else if (mode === 'reference' && uploadedImages.length > 0) {
       const referenceImages = uploadedImages.map((img) => ({
         base64: img.dataUrl.split(',')[1],
-        mimeType: img.file.type,
+        mimeType: img.mimeType,
       }))
       generateMutation.mutate({ prompt: enhancedPrompt || prompt, aspectRatio, style, referenceImages })
     } else {
@@ -178,12 +187,18 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
     }
 
     files.forEach((file) => {
-      if (!file.type.startsWith('image/')) { alert(`${file.name}: Please select an image`); return }
+      if (!isAllowedMime(file.type)) {
+        alert(`${file.name}: Unsupported format. Please use PNG, JPEG, or WebP.`)
+        return
+      }
       if (file.size > 10 * 1024 * 1024) { alert(`${file.name}: Must be less than 10MB`); return }
+      const mimeType: AllowedMime = file.type
       const reader = new FileReader()
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string
-        setUploadedImages((prev) => [...prev, { dataUrl, file }].slice(0, MAX_REFERENCE_IMAGES))
+        setUploadedImages((prev) =>
+          [...prev, { dataUrl, file, mimeType }].slice(0, MAX_REFERENCE_IMAGES)
+        )
       }
       reader.readAsDataURL(file)
     })
@@ -204,7 +219,7 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
         id="reference-file-upload"
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/webp"
         multiple
         onChange={handleFileSelect}
         className="hidden"
