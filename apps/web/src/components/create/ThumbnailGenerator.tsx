@@ -546,16 +546,28 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
       </Button>
 
       {/* Error */}
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-500">
-          {error.message}
-          {error.message.toLowerCase().includes('api key') && (
-            <div className="mt-2 text-xs text-red-500/90">
-              Add your Gemini API key in Settings (⚙️ icon) to enable image generation.
-            </div>
-          )}
-        </div>
-      )}
+      {error && (() => {
+        const msg = error.message || ''
+        const lower = msg.toLowerCase()
+        const isNetworkError =
+          lower.includes('failed to fetch') ||
+          lower.includes('network') ||
+          lower.includes('load failed') ||
+          lower.includes('networkerror')
+        const friendlyMessage = isNetworkError
+          ? "Can't reach the image service. Check your internet connection, or try again in a moment."
+          : msg
+        return (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-500">
+            {friendlyMessage}
+            {lower.includes('api key') && (
+              <div className="mt-2 text-xs text-red-500/90">
+                Add your Gemini API key in Settings (⚙️ icon) to enable image generation.
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Generated Image */}
       {generatedImage && (
@@ -568,11 +580,17 @@ export function ThumbnailGenerator({ onImageGenerated, className }: ThumbnailGen
           </div>
 
           <div className="relative rounded-lg overflow-hidden border bg-muted/50">
-            <img
-              src={`data:${generatedImage.mimeType};base64,${generatedImage.base64}`}
-              alt="Generated thumbnail"
-              className="w-full h-auto object-contain"
-            />
+            {generatedImage.base64 ? (
+              <img
+                src={`data:${generatedImage.mimeType};base64,${generatedImage.base64}`}
+                alt="Generated thumbnail"
+                className="w-full h-auto object-contain"
+              />
+            ) : (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                The model returned no image data. Please try again with a different prompt.
+              </div>
+            )}
           </div>
 
           {generatedImage.enhancedPrompt && (

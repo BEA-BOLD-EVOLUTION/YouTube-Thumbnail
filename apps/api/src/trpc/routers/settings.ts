@@ -108,18 +108,52 @@ export const settingsRouter = router({
   setGeminiApiKey: protectedProcedure
     .input(z.object({ apiKey: z.string().min(1, 'API key is required').max(200) }))
     .mutation(async ({ ctx, input }) => {
-      try {
-        const { GoogleGenAI } = await import('@google/genai')
-        const testClient = new GoogleGenAI({ apiKey: input.apiKey })
-        await testClient.models.list()
-      } catch {
+      const apiKey = input.apiKey.trim()
+
+      // Format check: Google AI Studio keys start with "AIza" and are ~39 chars.
+      // Accept anything that looks plausible — don't reject on cosmetic mismatches.
+      if (!/^AIza[0-9A-Za-z_-]{10,}$/.test(apiKey)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'Invalid API key. Please check your key and try again.',
+          message:
+            'That does not look like a Google AI Studio API key. Keys start with "AIza". Get one at https://aistudio.google.com/apikey',
         })
       }
 
-      const encrypted = encryptApiKey(input.apiKey)
+      // Best-effort liveness check using a cheap text model.
+      // Only reject the key on a *definitive* auth failure (401/403/"API key").
+      // Network errors, list-permission quirks, or transient issues must NOT
+      // block saving — otherwise valid keys get rejected and users are stuck.
+      try {
+        const { GoogleGenAI } = await import('@google/genai')
+        const testClient = new GoogleGenAI({ apiKey })
+        await testClient.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
+        } as any)
+      } catch (err) {
+        const msg = (err instanceof Error ? err.message : String(err)).toLowerCase()
+        const isDefinitiveAuthFailure =
+          msg.includes('api key not valid') ||
+          msg.includes('api_key_invalid') ||
+          msg.includes('invalid api key') ||
+          msg.includes('permission_denied') ||
+          msg.includes('unauthenticated') ||
+          msg.includes('401') ||
+          msg.includes('403')
+
+        if (isDefinitiveAuthFailure) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'This Gemini API key was rejected by Google. Double-check it at https://aistudio.google.com/apikey',
+          })
+        }
+        // Otherwise: log but accept. The key may be valid; the real generate
+        // call will surface any meaningful error later.
+        console.warn('[settings] Gemini key liveness probe failed (non-fatal):', msg)
+      }
+
+      const encrypted = encryptApiKey(apiKey)
       await ctx.prisma.user.update({
         where: { id: ctx.user.id },
         data: { geminiApiKey: encrypted, useOwnGemini: true },

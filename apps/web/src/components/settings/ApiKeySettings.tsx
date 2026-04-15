@@ -155,9 +155,22 @@ export function ApiKeySettings() {
                       {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
                     </Button>
                   </div>
-                  {setGeminiApiKey.error && (
-                    <p className="text-sm text-red-500">{setGeminiApiKey.error.message}</p>
-                  )}
+                  {setGeminiApiKey.error && (() => {
+                    const raw = setGeminiApiKey.error.message || ''
+                    const lower = raw.toLowerCase()
+                    const isNetworkError =
+                      lower.includes('failed to fetch') ||
+                      lower.includes('network') ||
+                      lower.includes('load failed') ||
+                      lower.includes('networkerror')
+                    return (
+                      <p className="text-sm text-red-500">
+                        {isNetworkError
+                          ? "Can't reach the server to save your key. Check your connection and try again."
+                          : raw}
+                      </p>
+                    )
+                  })()}
                 </div>
 
                 <a

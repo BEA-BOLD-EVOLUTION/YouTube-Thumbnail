@@ -632,17 +632,17 @@ export async function generateStartingImage(
       let thinking: string | undefined
       
       for (const part of parts) {
-        if (part.inlineData) {
+        if (part.inlineData?.data) {
           imageData = {
-            base64: part.inlineData.data || '',
+            base64: part.inlineData.data,
             mimeType: part.inlineData.mimeType || 'image/png',
           }
         } else if (part.thought) {
           thinking = part.text
         }
       }
-      
-      if (imageData) {
+
+      if (imageData && imageData.base64.length > 0) {
         return {
           success: true,
           image: {
@@ -668,23 +668,26 @@ export async function generateStartingImage(
     } as any)
 
     const parts = response.candidates?.[0]?.content?.parts || []
-    
+    const finishReason = (response.candidates?.[0] as any)?.finishReason
+
     let imageData: { base64: string; mimeType: string } | null = null
     let thinking: string | undefined
-    
+    let textFeedback = ''
+
     for (const part of parts) {
-      if (part.inlineData) {
+      if (part.inlineData?.data) {
         imageData = {
-          base64: part.inlineData.data || '',
+          base64: part.inlineData.data,
           mimeType: part.inlineData.mimeType || 'image/png',
         }
-      }
-      if ((part as any).thought) {
+      } else if ((part as any).thought) {
         thinking = (part as any).thought
+      } else if ((part as any).text) {
+        textFeedback += (part as any).text
       }
     }
 
-    if (imageData) {
+    if (imageData && imageData.base64.length > 0) {
       return {
         success: true,
         image: {
@@ -700,10 +703,28 @@ export async function generateStartingImage(
       }
     }
 
-    return {
-      success: false,
-      error: 'No image was generated. The model may not support image generation for this prompt.',
+    // No usable image — surface what we actually got so the user isn't left with
+    // a broken "failed to load" image tag.
+    console.warn('[ImageGen] No image in response', {
+      model,
+      finishReason,
+      partCount: parts.length,
+      hadEmptyInlineData: !!imageData && imageData.base64.length === 0,
+      textFeedback: textFeedback.slice(0, 500),
+    })
+
+    let errorMsg = 'No image was generated.'
+    if (finishReason === 'SAFETY' || finishReason === 'PROHIBITED_CONTENT') {
+      errorMsg = 'The prompt was blocked by safety filters. Try rephrasing — avoid explicit content, real-person likenesses, or sensitive topics.'
+    } else if (finishReason === 'RECITATION') {
+      errorMsg = 'The model refused to generate this image (possible copyright concern). Try a more original prompt.'
+    } else if (textFeedback.trim()) {
+      errorMsg = `The model responded with text instead of an image: "${textFeedback.trim().slice(0, 200)}". Try making the prompt more visual and specific.`
+    } else {
+      errorMsg = 'The model did not return an image. Try simplifying or rephrasing the prompt.'
     }
+
+    return { success: false, error: errorMsg }
   } catch (error) {
     console.error('Image generation error:', {
       error,
