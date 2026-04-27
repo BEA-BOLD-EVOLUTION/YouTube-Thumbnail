@@ -130,29 +130,39 @@ function createTechnicalGuidePrompt(title: string, description: string): string 
 STYLE REQUIREMENTS:
 - Bold, high-contrast 2D cartoon illustration with thick clean outlines and cel-shading
 - Single-panel composition showing the successful final outcome (AFTER state)
-- Vibrant, HYPER-saturated colors with neon accents optimized for tiny mobile screens
-- Large bold 3D extruded "YouTube-style" text with black outlines AND colorful drop shadows, slight perspective tilt for dynamism
-- Cartoon-style icons, symbols, and success indicators rendered with depth and dimension
-- Dramatic radial light burst or glow emanating from the central object
-- Floating decorative elements: sparkles, stars, speed lines, small emoji-style icons, confetti particles
-- Subtle gradient background (NOT flat) with energy — radial gradients, bokeh-style color orbs, or diagonal light streaks
-- Every object should feel 3-dimensional with highlights, shading, and a slight glossy sheen
-- NO photorealism, NO photography, NO camera effects — pure high-energy cartoon illustration
+- Vibrant, saturated colors with strong contrast, optimized for tiny mobile screens
+- Large bold 3D extruded "YouTube-style" headline text with black outlines and a colored drop shadow, slight perspective tilt
+- Every object should feel 3-dimensional with cel-shaded highlights and a slight glossy sheen
+- NO photorealism, NO photography, NO camera effects — pure cartoon illustration
 
 VIDEO CONTEXT:
 Title: "${title}"
 ${description ? `Description: "${description.slice(0, 300)}..."` : ''}
 
-INSTRUCTIONS:
-Analyze the video title and create a thumbnail featuring:
-1. A LARGE, detailed central cartoon object that represents the successful solution — give it depth, glossy highlights, and a glowing aura or backlight
-2. Radiating success indicators: glowing checkmarks, upward arrows, sparkle bursts, light rays fanning out from the center
-3. MASSIVE, bold headline text extracted from the video title in chunky 3D extruded block letters with colored shadows and a slight arc or perspective tilt
-4. A dynamic gradient background with energy (radial burst, diagonal streaks, or floating color orbs) — never a plain flat color
-5. Scattered floating micro-details: tiny stars, sparkles, speed lines, emoji-like icons that fill empty space and add visual density
-6. Focus only on the final positive result — no "before" states or comparisons
+THEME COHERENCE (most important):
+First, identify the SPECIFIC subject matter of the video from its title. Every visual element in the
+thumbnail must be drawn from that subject's real-world iconography. The decoration is NOT generic —
+it IS the topic. For example:
+  • "US Creator Taxes" → 1040/W-9 forms, calculator, stack of dollar bills, IRS-style envelope, pen, magnifying glass over a tax form, percent symbol, receipts. NO generic checkmarks/confetti.
+  • "Best Lighting for YouTube" → ring light, softbox, LED panel, camera, brightness sliders.
+  • "How to Get Sponsors" → handshake, brand logos on a contract, dollar signs, email envelope, phone showing DMs.
+  • "Beat the Algorithm" → stylized graph trending up, play button, view counter, retention curve, click cursor.
 
-The thumbnail should feel EXPLOSIVE, energetic, and impossible to scroll past — like a candy-colored comic book panel bursting with light and detail.`
+INSTRUCTIONS:
+Analyze the title and design a thumbnail with:
+1. A LARGE, detailed central cartoon object (or a tight cluster of 2–3 related objects) that literally depicts the topic — pulled from the iconography list you derived above. Give it depth, cel-shading, and a glossy sheen.
+2. 2–4 supporting cartoon props arranged around the hero object — also drawn from the topic's iconography. They should feel like part of the scene, not floating decoration.
+3. MASSIVE 3D extruded headline derived from the title in chunky block letters with a black outline and a single colored drop shadow. Slight perspective tilt is fine; do not over-stylize.
+4. A clean gradient background in 1–2 colors that match the topic's mood (e.g. green/gold for money topics, blue/white for tech, warm orange for cooking). It can have soft directional light or a subtle vignette, but NOT a high-contrast radial burst behind the subject.
+5. Optional accents ONLY when they reinforce the theme — e.g. a couple of small green checkmarks for a "how to" success topic, a few coin sparkles for a money topic. If accents do not reinforce the topic, omit them entirely.
+
+STRICTLY AVOID:
+- Generic radial light bursts, sun-ray fans, or explosion lines behind the subject when they do not belong to the topic
+- Confetti, party streamers, or celebration particles unless the video is literally about a celebration
+- Random floating sparkles, stars, speed lines, hearts, or emoji clutter used as filler
+- Repeating the same decoration set across unrelated topics — every thumbnail should look distinctly tied to its title
+
+The goal: a viewer should be able to guess the video's exact topic from the imagery alone, before reading the headline.`
 }
 
 /**
@@ -200,27 +210,33 @@ function createSubjectContextPrompt(title: string, description: string): string 
 
 STYLE REQUIREMENTS:
 - Bold, high-contrast 2D cartoon illustration with thick clean outlines and cel-shading
-- Dynamic gradient background with hyper-saturated colors, neon accents, and radial energy (light bursts, floating color orbs, diagonal streaks)
-- Main subject in MASSIVE, bold 3D extruded block text with black outlines, colored drop shadows, and slight perspective tilt
-- Cartoon-style supporting icons and visual elements with depth, glossy highlights, and glowing auras
-- Every element has dimension: cel-shading, glossy sheen, subtle shadows
-- Floating micro-details fill the space: sparkles, tiny stars, speed lines, confetti, emoji-style icons
-- NO photorealism, NO photography, NO camera effects — pure high-energy cartoon illustration
+- Clean gradient background tied to the topic's mood — NOT a generic radial burst or sparkle field
+- Main subject in MASSIVE, bold 3D extruded block text with black outlines and a colored drop shadow, slight perspective tilt
+- Cartoon supporting icons and visual elements with cel-shaded depth and glossy highlights
+- NO photorealism, NO photography, NO camera effects — pure cartoon illustration
 
 VIDEO CONTEXT:
 Title: "${title}"
 ${description ? `Description: "${description.slice(0, 300)}..."` : ''}
 
-INSTRUCTIONS:
-Create a professional informational thumbnail:
-1. Display the main subject from the title in MASSIVE, bold 3D extruded block text at the top/center with colored drop shadows and slight perspective tilt
-2. Add fully detailed cartoon supporting visual elements (icons, devices, symbols, or metaphors) with depth, glossy highlights, and glowing auras — not simple flat shapes
-3. Use a dynamic gradient background with energy: radial burst, diagonal light streaks, or floating neon color orbs — never a plain flat color
-4. Ensure high contrast and legibility with thick outlines and cel-shading on all elements
-5. Scatter floating micro-details throughout: sparkles, tiny stars, speed lines, emoji-style icons, confetti particles to fill empty space
-6. Every element should have depth and dimensionality — glossy sheen, highlights, subtle shadows
+THEME COHERENCE (most important):
+Identify the specific subject of the video and choose iconography that REAL viewers of that topic
+would recognize. The supporting visuals must come from the topic itself, not from a generic
+"YouTube thumbnail" decoration kit.
 
-The thumbnail should feel energetic and premium — like a candy-colored comic book cover bursting with light and visual density. Impossible to scroll past.`
+INSTRUCTIONS:
+1. Display the main subject phrase from the title in MASSIVE 3D extruded block text with a black outline and one colored drop shadow.
+2. Surround the headline with 2–4 detailed cartoon objects pulled directly from the topic's real-world iconography (props, devices, symbols viewers of this exact subject would recognize). No abstract decoration.
+3. Use a calm gradient background in 1–2 colors matching the topic's mood (money → green/gold, tech → blue, food → warm orange, etc.). Optional subtle directional light, but NOT a radial sun-burst behind the subject.
+4. Keep all elements high-contrast and clearly readable on a small mobile screen.
+5. Add floating accents ONLY when they reinforce the theme; otherwise leave the negative space clean. Do not fill empty space with random sparkles, speed lines, or confetti.
+
+STRICTLY AVOID:
+- Generic radial light bursts, sun-ray fans, sparkle clouds, confetti, or speed lines used as filler
+- Decoration that would look identical across unrelated topics
+- Anything that draws attention away from the topic-specific objects
+
+The finished thumbnail should look distinctly like a thumbnail for THIS video — recognizable from imagery alone.`
 }
 
 /**

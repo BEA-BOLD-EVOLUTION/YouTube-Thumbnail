@@ -987,19 +987,31 @@ Here is the brief:
 
 YOUR TASK:
 1. KEEP the exact art style described (2D cartoon illustration, thick outlines, cel-shading, etc.)
-2. Analyze the video title in the brief and create specific, concrete visual elements that represent the content
-3. Describe each visual element in LAVISH detail — specific colors, glow effects, dimension, texture, sheen
-4. AMPLIFY visual energy: add radial light bursts, neon glow auras, floating sparkles, speed lines, confetti particles, glossy highlights
-5. Write the prompt as one cohesive, ultra-detailed paragraph describing the final thumbnail image
-6. Include the specific text/headlines that should appear — describe them as MASSIVE 3D extruded block letters with colored drop shadows, slight tilt, and glowing edges
-7. Describe the background as a DYNAMIC gradient with energy (radial burst, diagonal streaks, floating color orbs) — never flat
-8. Fill empty space with floating micro-details: tiny stars, sparkles, emoji-style icons, speed lines
+2. Analyze the video title in the brief and design THEME-SPECIFIC visual elements drawn from the
+   real-world iconography of the topic. Every supporting object must be something a viewer of that
+   exact topic would recognize. Do NOT use generic decoration as filler.
+3. Describe each visual element in concrete detail — specific objects, colors, materials, sheen.
+4. Write the prompt as one cohesive paragraph describing the final thumbnail image.
+5. Include the specific text/headlines as MASSIVE 3D extruded block letters with a black outline
+   and one colored drop shadow, slight tilt is fine.
+6. Describe the background as a clean gradient (1–2 colors) tied to the topic's mood — NOT a
+   high-contrast radial burst behind the subject and NOT a sparkle/confetti field.
+7. Leave negative space clean. Only add small accents (e.g. a checkmark, a coin sparkle) when they
+   directly reinforce the topic.
+
+STRICTLY AVOID injecting any of the following unless the topic literally calls for it:
+- Radial light bursts, sun-ray fans, explosion lines behind the subject
+- Confetti, party streamers, celebration particles
+- Floating sparkles, stars, speed lines, hearts, or emoji clutter used as filler
+- Generic "every YouTube thumbnail" decoration that would look identical across unrelated videos
 
 IMPORTANT:
 - The output must describe a 2D cartoon illustration, NOT a photograph
 - NO camera terms, NO lens types, NO lighting setups, NO bokeh, NO depth of field
-- YES: bold outlines, cel-shading, glossy highlights, neon accents, 3D extruded text with colored shadows, radiant glow effects, floating decorative particles
-- The final image should feel EXPLOSIVE and PREMIUM — like a top-tier YouTube thumbnail that demands clicks
+- YES: bold outlines, cel-shading, glossy highlights, 3D extruded text with a colored shadow,
+  topic-specific cartoon objects rendered with depth
+- The final thumbnail should be instantly recognizable as being about THIS specific video — a
+  viewer should be able to guess the topic from the imagery alone, before reading the headline.
 
 Respond with ONLY the enhanced image prompt, no explanations.`
       : buildStyleAwareEnhancePrompt(videoIntent, effectiveStyle, options?.aspectRatio)
