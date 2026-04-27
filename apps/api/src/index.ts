@@ -35,8 +35,19 @@ console.log('   GOOGLE_GEMINI_API_KEY:', process.env.GOOGLE_GEMINI_API_KEY ? '�
 console.log('   ENCRYPTION_KEY:', process.env.ENCRYPTION_KEY ? '✅ set' : '⚠️  missing (BYOK keys will use legacy encoding)')
 console.log('   ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS ? `✅ ${process.env.ALLOWED_ORIGINS}` : '(none — using defaults)')
 
-// Security headers
-app.use(helmet())
+// Security headers — relax CORP so the API can be consumed cross-origin
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+)
+
+const envOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
 
 // Extra origins provided at runtime via env var, e.g.
 //   ALLOWED_ORIGINS="https://my-app.vercel.app,https://staging.example.com"
@@ -49,32 +60,47 @@ const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
 const allowedOrigins: (string | RegExp)[] = [
   'http://localhost:3000',
   'http://localhost:3001',
-  /https:\/\/youtube-thumbnail.*\.vercel\.app$/,
+  /^https:\/\/youtube-thumbnail.*\.vercel\.app$/,
   // Match Vercel preview deployments for this project: "*-thumbnail-web-*.vercel.app"
   // (covers truncated hostnames like "…bnail-web.vercel.app" seen on mobile Safari).
-  /https:\/\/.*thumbnail-web[-.].*\.vercel\.app$/,
-  'https://web-production-8640b.up.railway.app',
+  /^https:\/\/.*thumbnail-web[-.].*\.vercel\.app$/,
+  /^https:\/\/.*\.up\.railway\.app$/,
   ...envAllowedOrigins,
+  ...envOrigins,
 ]
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true)
-      const isAllowed = allowedOrigins.some((allowed) =>
-        typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
-      )
-      if (!isAllowed) {
-        console.warn(`CORS blocked request from: ${origin}`)
-        return callback(new Error('Not allowed by CORS'))
-      }
-      callback(null, true)
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-trpc-source'],
-  })
-)
+const corsMiddleware = cors({
+  origin: (origin, callback) => {
+    // Non-browser / same-origin requests have no Origin header — allow.
+    if (!origin) return callback(null, true)
+    const isAllowed = allowedOrigins.some((allowed) =>
+      typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
+    )
+    if (!isAllowed) {
+      console.warn(`CORS blocked request from: ${origin}`)
+      // Returning false (instead of an Error) responds without CORS headers
+      // and a clean 204/200 — the browser will block, but we won't 500.
+      return callback(null, false)
+    }
+    callback(null, true)
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-trpc-source',
+    'trpc-batch-mode',
+    'trpc-accept',
+  ],
+  maxAge: 86400,
+  optionsSuccessStatus: 204,
+})
+
+app.use(corsMiddleware)
+// Explicitly answer all preflight requests before any other middleware
+// (rate limiters, body parsers) can interfere with the response.
+app.options('*', corsMiddleware)
 
 // Rate limiting — global
 app.use(
@@ -83,6 +109,9 @@ app.use(
     max: 200,
     standardHeaders: true,
     legacyHeaders: false,
+    // Don't rate-limit CORS preflight — a 429 here would strip CORS headers
+    // and cause the browser to block the actual request.
+    skip: (req) => req.method === 'OPTIONS',
     message: { error: 'Too many requests, please try again later.' },
   })
 )
@@ -95,6 +124,7 @@ app.use(
     max: 30,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => req.method === 'OPTIONS',
     message: { error: 'Generation limit reached, please try again in an hour.' },
   })
 )

@@ -1,17 +1,17 @@
 # YouTube Thumbnail Generator
 
-An AI-powered thumbnail generator for BEA training videos. Built as a full-stack monorepo with a Next.js web app and an Express/tRPC API backend.
+An AI-powered thumbnail generator. Built as a full-stack monorepo with a Next.js frontend and an Express/tRPC API backend, using Google Gemini for image generation.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+| ----- | ---------- |
 | Frontend | Next.js 16, React 19, Tailwind CSS v4 |
 | Backend | Express, tRPC, Prisma ORM |
-| Auth | Supabase (email/password, invite-only) |
-| AI | Google Gemini (Flash & Pro) via `@google/genai` |
+| Auth | Supabase (email/password) |
+| AI | Google Gemini (Flash & Pro) |
 | Database | Supabase (PostgreSQL) |
 | Monorepo | Turborepo |
 
@@ -19,7 +19,7 @@ An AI-powered thumbnail generator for BEA training videos. Built as a full-stack
 
 ## Project Structure
 
-```
+```text
 apps/
   web/    # Next.js frontend (port 3000)
   api/    # Express + tRPC backend (port 4000)
@@ -33,21 +33,24 @@ apps/
 
 - Node.js >= 20.9.0
 - npm >= 9.8.1
+- A [Supabase](https://supabase.com) project
+- A [Google Gemini API key](https://aistudio.google.com/apikey)
 
 ### Environment Variables
 
 **`apps/api/.env`**
+
 ```env
 DATABASE_URL=
 DIRECT_URL=
 SUPABASE_URL=
 SUPABASE_SERVICE_KEY=
 GOOGLE_GEMINI_API_KEY=
-GOOGLE_GEMINI_API_KEYS=   # optional: comma-separated key rotation
 PORT=4000
 ```
 
 **`apps/web/.env.local`**
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_SUPABASE_URL=
@@ -57,16 +60,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ### Install & Run
 
 ```bash
-# Install dependencies
 npm install
-
-# Run both apps in dev mode
 npm run dev
-
-# Or run individually
-cd apps/web && npm run dev   # http://localhost:3000
-cd apps/api && npm run dev   # http://localhost:4000
 ```
+
+The web app runs at `http://localhost:3000` and the API at `http://localhost:4000`.
 
 ### Database
 
@@ -81,35 +79,20 @@ npm run db:studio     # Open Prisma Studio
 
 ## Features
 
-- **4 generation modes:** Prompt, Reference (upload up to 4 images), Intent (describe your video), Video Link (YouTube/TikTok URL)
+- **4 generation modes:** Prompt, Reference (upload images), Intent (describe your video), Video Link (YouTube/TikTok URL)
 - **Prompt templates:** Subject + Context, Technical Guide, Do This; Not That
-- **AI prompt enhancement** using Gemini text models
+- **AI prompt enhancement** via Gemini text models
 - **Aspect ratios:** 16:9, 9:16, 1:1
 - **Styles:** Photo, Cinematic, Anime, Illustration, Concept
 - **BYOK (Bring Your Own Key):** Users can supply their own Gemini API key
-- **Model selection:** Gemini Flash (fast) or Gemini Pro (higher quality)
-- **Invite-only access** — public sign-ups are disabled
+- **Model selection:** Gemini Flash or Gemini Pro
 
 ---
 
-## User Management
-
-Access is restricted to authorized users only. See [USER_MANAGEMENT.md](USER_MANAGEMENT.md) for how to create and manage accounts via the Supabase Dashboard.
-
----
-
-## User Guide
-
-See [WALKTHROUGH.md](WALKTHROUGH.md) for a full walkthrough of all generation modes, templates, and best practices.
-
----
-
-## Build & Deploy
+## Build
 
 ```bash
 npm run build    # Build all apps
 npm run lint     # Lint all apps
 npm run clean    # Clean build artifacts
 ```
-
-The API is deployable to Railway; the web app is deployable to Vercel.

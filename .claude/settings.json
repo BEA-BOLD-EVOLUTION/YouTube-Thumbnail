@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push:*)",
+      "Read(//workspaceYouTube-Thumbnail/apps/api/src/**)",
+      "Bash(xargs cat:*)"
+    ]
+  }
+}
