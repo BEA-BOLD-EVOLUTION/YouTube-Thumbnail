@@ -30,11 +30,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
       ? 'http://localhost:4000'
       : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
+  // In production we use a same-origin Next.js rewrite (/api-proxy/trpc -> Railway)
+  // to avoid CORS preflight entirely. In development we hit the API directly.
+  const trpcUrl =
+    process.env.NODE_ENV === 'development'
+      ? `${defaultApiUrl.replace(/\/$/, '')}/trpc`
+      : '/api-proxy/trpc'
+
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: `${(process.env.NEXT_PUBLIC_API_URL || defaultApiUrl).replace(/\/$/, '')}/trpc`,
+          url: trpcUrl,
           fetch(url, options) {
             return fetch(url, { ...options, credentials: 'include' })
           },
