@@ -36,13 +36,12 @@ console.log('   ENCRYPTION_KEY:', process.env.ENCRYPTION_KEY ? '✅ set' : '⚠�
 console.log('   ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS ? `✅ ${process.env.ALLOWED_ORIGINS}` : '(none — using defaults)')
 
 // Security headers — relax CORP so the API can be consumed cross-origin
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: 'cross-origin' },
-    crossOriginOpenerPolicy: false,
-    crossOriginEmbedderPolicy: false,
-  })
-)
+// NOTE: registered AFTER cors below so preflight short-circuits first.
+const helmetMiddleware = helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false,
+})
 
 const envOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
@@ -60,23 +59,27 @@ const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
 const allowedOrigins: (string | RegExp)[] = [
   'http://localhost:3000',
   'http://localhost:3001',
-  /^https:\/\/youtube-thumbnail.*\.vercel\.app$/,
-  // Match Vercel preview deployments for this project: "*-thumbnail-web-*.vercel.app"
-  // (covers truncated hostnames like "…bnail-web.vercel.app" seen on mobile Safari).
-  /^https:\/\/.*thumbnail-web[-.].*\.vercel\.app$/,
-  /^https:\/\/.*\.up\.railway\.app$/,
+  // Any *.vercel.app — covers production and preview deployments for this
+  // project regardless of the project's exact slug (e.g. youtube-thumbnail-*,
+  // you-tube-thumbnail-web, etc.). If you need to lock this down to a single
+  // project later, set ALLOWED_ORIGINS explicitly and remove this regex.
+  /^https:\/\/[a-z0-9-]+\.vercel\.app$/i,
+  /^https:\/\/[a-z0-9-]+\.up\.railway\.app$/i,
   ...envAllowedOrigins,
   ...envOrigins,
 ]
+
+function isOriginAllowed(origin: string): boolean {
+  return allowedOrigins.some((allowed) =>
+    typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
+  )
+}
 
 const corsMiddleware = cors({
   origin: (origin, callback) => {
     // Non-browser / same-origin requests have no Origin header — allow.
     if (!origin) return callback(null, true)
-    const isAllowed = allowedOrigins.some((allowed) =>
-      typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
-    )
-    if (!isAllowed) {
+    if (!isOriginAllowed(origin)) {
       console.warn(`CORS blocked request from: ${origin}`)
       // Returning false (instead of an Error) responds without CORS headers
       // and a clean 204/200 — the browser will block, but we won't 500.
@@ -97,10 +100,35 @@ const corsMiddleware = cors({
   optionsSuccessStatus: 204,
 })
 
+// 1. CORS first — must run before helmet/rate-limit/body-parser so that
+//    preflight responses always carry valid CORS headers and a 2xx status.
 app.use(corsMiddleware)
-// Explicitly answer all preflight requests before any other middleware
-// (rate limiters, body parsers) can interfere with the response.
-app.options('*', corsMiddleware)
+
+// 2. Bulletproof preflight short-circuit. Some upstream proxies (Railway's
+//    edge) return 415 if OPTIONS bodies/content-type confuse downstream
+//    middleware. Answer every OPTIONS here and return 204 immediately.
+app.use((req, res, next) => {
+  if (req.method !== 'OPTIONS') return next()
+  const origin = req.headers.origin
+  if (origin && isOriginAllowed(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Vary', 'Origin')
+    res.setHeader('Access-Control-Allow-Credentials', 'true')
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET, POST, PUT, DELETE, OPTIONS'
+    )
+    const reqHeaders =
+      (req.headers['access-control-request-headers'] as string | undefined) ||
+      'Content-Type, Authorization, x-trpc-source, trpc-batch-mode, trpc-accept'
+    res.setHeader('Access-Control-Allow-Headers', reqHeaders)
+    res.setHeader('Access-Control-Max-Age', '86400')
+  }
+  res.status(204).end()
+})
+
+// 3. Now apply security/rate-limit middleware to non-preflight traffic.
+app.use(helmetMiddleware)
 
 // Rate limiting — global
 app.use(
